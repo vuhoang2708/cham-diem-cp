@@ -71,6 +71,21 @@ async def run_scoring():
 
     await scraper.disconnect()
     print(f"\nScoring process finished. Successfully processed {results_count}/{total_symbols} stocks.")
+    
+    # 5. Export to JSON for Vercel
+    from database import export_to_json
+    export_to_json()
+    
+    # 6. Push to GitHub
+    print("Pushing updated data to GitHub...")
+    import subprocess
+    try:
+        subprocess.run(["git", "add", "frontend/data.json"], check=True)
+        subprocess.run(["git", "commit", "-m", "data: update scores after scoring run"], check=True)
+        subprocess.run(["git", "push"], check=True)
+        print("GitHub push successful. Vercel will update shortly.")
+    except Exception as e:
+        print(f"Failed to push to GitHub: {e}")
 
 if __name__ == "__main__":
     asyncio.run(run_scoring())

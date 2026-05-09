@@ -54,6 +54,15 @@ def get_all_scores():
     conn.close()
     return [dict(row) for row in rows]
 
+def export_to_json():
+    import json
+    scores = get_all_scores()
+    json_path = os.path.join(os.path.dirname(__file__), '..', 'frontend', 'data.json')
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(scores, f, ensure_ascii=False, indent=2)
+    print(f"Exported scores to {json_path}")
+
 if __name__ == "__main__":
     init_db()
-    print("Database initialized.")
+    export_to_json()
+    print("Database initialized and exported.")

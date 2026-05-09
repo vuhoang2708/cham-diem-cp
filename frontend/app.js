@@ -13,30 +13,52 @@ let isRefreshing = false;
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
     fetchScores();
-    checkStatus();
-    // Poll status every 3 seconds if refreshing
-    setInterval(checkStatus, 3000);
+    
+    // Only show refresh controls and poll status if running on localhost
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        checkStatus();
+        setInterval(checkStatus, 3000);
+    } else {
+        // Hide local-only UI elements on Vercel
+        const refreshBtn = document.getElementById('btnRefresh');
+        if (refreshBtn) refreshBtn.style.display = 'none';
+        const statusDot = document.getElementById('statusDot');
+        if (statusDot) statusDot.style.visibility = 'hidden';
+    }
 });
 
 // ---- API Calls ----
 async function fetchScores() {
     try {
+        // Try local API first
         const response = await fetch(`${API_BASE}/scores`);
-        if (!response.ok) throw new Error("Failed to fetch scores");
+        if (!response.ok) throw new Error("Local API failed");
         const data = await response.json();
-        
-        allData = data;
-        filteredData = [...allData];
-        
-        updateStats();
-        sortAndRender();
-        
-        if (allData.length > 0) {
-            const lastUpdate = new Date(allData[0].updated_at);
-            document.getElementById('updateText').textContent = `Cập nhật: ${lastUpdate.toLocaleDateString('vi-VN')} ${lastUpdate.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}`;
-        }
+        processData(data);
     } catch (error) {
-        console.error("Error fetching scores:", error);
+        console.log("Local API not available, falling back to data.json...");
+        try {
+            // Fallback to static JSON file
+            const response = await fetch('data.json');
+            if (!response.ok) throw new Error("data.json not found");
+            const data = await response.json();
+            processData(data);
+        } catch (err) {
+            console.error("Could not fetch data from any source:", err);
+        }
+    }
+}
+
+function processData(data) {
+    allData = data;
+    filteredData = [...allData];
+    
+    updateStats();
+    sortAndRender();
+    
+    if (allData.length > 0) {
+        const lastUpdate = new Date(allData[0].updated_at);
+        document.getElementById('updateText').textContent = `Cập nhật: ${lastUpdate.toLocaleDateString('vi-VN')} ${lastUpdate.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}`;
     }
 }
 
