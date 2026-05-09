@@ -60,72 +60,46 @@ class MCDXScraper:
             await page.goto(url, wait_until="networkidle", timeout=60000)
             await page.wait_for_timeout(3000) # Wait for indicators to load
             
-            # Close dialogs if any
-            dialog_close = page.locator(".bp5-dialog-close-button")
-            if await dialog_close.count() > 0:
-                await dialog_close.first.click()
-                await page.wait_for_timeout(1000)
-            
-            # Ensure we are on Chart tab
+            # 1. Wait for Chart tab and click it
             chart_tab = page.locator("text=Biểu đồ").first
             if await chart_tab.is_visible():
                 await chart_tab.click(force=True)
-                await page.wait_for_timeout(2000)
+                await page.wait_for_timeout(5000) # Wait longer for indicators to compute
 
-            # Locate MCDX legend value
-            # Based on user description, it's "Banker Smart Money" in a legend
-            # We look for text that contains 'Banker' and extract the following number
-            
-            # This part is tricky as Fireant uses canvas. We hope there's a legend text element.
-            # Usually indicators have legends like "FA MCDX (..., ..., ...)"
-            # We search for elements containing "Banker" or "FA MCDX"
-            
-            # Strategy: Find all text elements and look for the pattern
-            # Or use a specific selector if known.
-            
-            # Let's try to find elements with "Banker" text
-            banker_elements = page.locator("text=Banker")
-            count = await banker_elements.count()
-            
-            banker_value = 0.0
-            
-            # If we find "Banker Smart Money", the value might be in a sibling or nearby element
-            # Many charts show legend values in a 'legend-value' class or similar
-            
-            # For now, we'll try a common pattern for Fireant/TradingView:
-            # Look for "Banker Smart Money" and then the numeric value next to it.
-            
-            # If direct extraction fails, we might need a more specific selector
-            # derived from inspecting the live DOM.
-            
-            # Placeholder: In a real scenario, we'd use page.evaluate to find the exact DOM node
-            # containing the MCDX values.
+            # 2. Extract values from FA MCDX legend
+            # Pattern: FA MCDX (input_params) Value1 Value2 Value3
+            # Value1: Retailer (Green), Value2: Hot Money (Yellow), Value3: Banker (Red)
             
             val_text = await page.evaluate('''() => {
-                const elements = Array.from(document.querySelectorAll('div, span'));
-                // Look for MCDX legend
-                const mcdxLegend = elements.find(el => el.innerText.includes('Banker Smart Money'));
-                if (mcdxLegend) {
-                    // Try to find the value which is usually a number after the label
-                    // The value might be in a child span or just trailing text
-                    return mcdxLegend.innerText;
-                }
-                return null;
+                const legends = Array.from(document.querySelectorAll('div[class*="legend"]'));
+                const mcdxLegend = legends.find(el => el.innerText.includes('FA MCDX'));
+                return mcdxLegend ? mcdxLegend.innerText : null;
             }''')
             
+            banker_value = 0.0
             if val_text:
-                print(f"Found legend text: {val_text}")
-                # Parse number from "Banker Smart Money: 15.5" or similar
+                print(f"Found MCDX legend: {val_text}")
+                # Use regex to find all numbers (including decimals)
                 import re
-                match = re.search(r'Banker Smart Money[:\s]*([\d\.]+)', val_text)
-                if match:
-                    banker_value = float(match.group(1))
+                # We skip the input parameters (usually in parentheses) and look for the values after
+                # Example: "FA MCDX (50, 20, 1) 0.0000 6.3925 13.6075"
+                
+                # Split by closing parenthesis to isolate values
+                parts = val_text.split(')')
+                if len(parts) > 1:
+                    values_part = parts[1]
+                    numbers = re.findall(r'[\d\.]+', values_part)
+                    if len(numbers) >= 3:
+                        # Index 2 is the 3rd number (Banker)
+                        banker_value = float(numbers[2])
+                    elif len(numbers) > 0:
+                        # Fallback: if fewer numbers, maybe only some are shown, take the last one
+                        banker_value = float(numbers[-1])
             else:
-                # Fallback: search for generic legend values if "Banker" not found
-                print(f"Could not find 'Banker Smart Money' text for {symbol}")
+                print(f"Could not find 'FA MCDX' legend for {symbol}")
             
             return {
-                'banker_value': banker_value,
+                'banker_value': round(banker_value, 2),
                 'mcdx_score': self.calculate_mcdx_score(banker_value)
             }
 
