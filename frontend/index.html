@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VN100 Stock Scorer — Dashboard Chấm Điểm Cổ Phiếu</title>
+  <meta name="description" content="Dashboard chấm điểm và xếp hạng cổ phiếu VN100 dựa trên chỉ báo MCDX Banker Smart Money và vị trí RRG.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Background ambient glow -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- ========== HEADER ========== -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+            <polyline points="16 7 22 7 22 13"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">VN100 Stock Scorer</h1>
+          <p class="brand-sub">Hệ thống chấm điểm cổ phiếu tự động</p>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="criteria-pills">
+          <span class="pill pill-blue">MCDX Banker</span>
+          <span class="pill-divider">+</span>
+          <span class="pill pill-purple">RRG Quadrant</span>
+          <span class="pill-divider">=</span>
+          <span class="pill pill-gold">Tổng điểm</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="update-info" id="updateInfo">
+          <span class="update-dot" id="statusDot"></span>
+          <span id="updateText">Cập nhật: 09/05/2026 16:05</span>
+        </div>
+        <button class="btn-refresh" id="btnRefresh" onclick="startRefresh()">
+          <svg id="refreshIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          Cập nhật ngay
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-container" id="progressContainer">
+      <div class="progress-bar" id="progressBar"></div>
+      <span class="progress-label" id="progressLabel">Đang xử lý VCB... (3/100)</span>
+    </div>
+  </header>
+
+  <!-- ========== STATS ROW ========== -->
+  <section class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      </div>
+      <div>
+        <div class="stat-value" id="statTotal">100</div>
+        <div class="stat-label">Cổ phiếu VN100</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+      <div>
+        <div class="stat-value stat-green" id="statLeading">—</div>
+        <div class="stat-label">Tăng giá (Leading)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-blue2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <div>
+        <div class="stat-value stat-blue" id="statImproving">—</div>
+        <div class="stat-label">Tích lũy (Improving)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-orange">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+      </div>
+      <div>
+        <div class="stat-value stat-orange" id="statWeakening">—</div>
+        <div class="stat-label">Suy yếu (Weakening)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-red">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/></svg>
+      </div>
+      <div>
+        <div class="stat-value stat-red" id="statLagging">—</div>
+        <div class="stat-label">Giảm giá (Lagging)</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon-gold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </div>
+      <div>
+        <div class="stat-value stat-gold" id="statTopScore">—</div>
+        <div class="stat-label">Điểm cao nhất</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== TABLE SECTION ========== -->
+  <section class="table-section">
+    <div class="table-toolbar">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Tìm mã cổ phiếu..." oninput="filterTable()">
+      </div>
+      <div class="filter-group">
+        <select id="filterQuadrant" onchange="filterTable()" class="filter-select">
+          <option value="">Tất cả vùng RRG</option>
+          <option value="TĂNG GIÁ">🟢 Tăng giá</option>
+          <option value="TÍCH LŨY">🔵 Tích lũy</option>
+          <option value="SUY YẾU">🟠 Suy yếu</option>
+          <option value="GIẢM GIÁ">🔴 Giảm giá</option>
+        </select>
+        <button class="btn-export" onclick="exportCSV()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Xuất CSV
+        </button>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table id="scoreTable">
+        <thead>
+          <tr>
+            <th class="col-rank">STT</th>
+            <th class="col-symbol sortable" onclick="sortTable('symbol')">
+              Mã CP <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-total sortable active-sort" onclick="sortTable('total')">
+              Tổng điểm <span class="sort-icon">↓</span>
+            </th>
+            <th class="col-score sortable" onclick="sortTable('mcdx_score')">
+              MCDX Score <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-value sortable" onclick="sortTable('banker_value')">
+              Banker Value <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-rrg">Vùng RRG</th>
+            <th class="col-num sortable" onclick="sortTable('rs_ratio')">
+              RS-Ratio <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-num sortable" onclick="sortTable('rs_mom')">
+              RS-Mom <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-tail sortable" onclick="sortTable('tail_5d')">
+              Tail 5D <span class="sort-icon">↕</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Rows injected by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <span id="rowCount">Hiển thị 0 mã</span>
+      <span class="mock-badge">⚠ Dữ liệu demo — Chưa cập nhật thật</span>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
