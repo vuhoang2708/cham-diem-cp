@@ -4,3 +4,6 @@ playwright
 pandas
 requests
 apscheduler
+vnstock==0.2.8.3
+numpy
+plotly
