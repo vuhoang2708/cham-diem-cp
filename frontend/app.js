@@ -351,16 +351,17 @@ function updateSortHeaders() {
         if (icon) icon.textContent = '↕';
     });
     const ths = document.querySelectorAll('thead th');
-    // Map keys to column index mới
+    // Map keys to column index mới (Dựa trên index.html mới)
     const keyIdx = { 
         'symbol': 2, 
-        'mcdx_score': 3, 
-        'banker_left': 4, 
-        'banker_right': 5, 
-        'total_score': 7, 
-        'rs_ratio': 8, 
-        'rs_mom': 9, 
-        'tail_5d': 10 
+        'total_score': 3, 
+        'mcdx_score': 4, 
+        'rrg_score': 5,
+        'banker_left': 7, 
+        'banker_right': 8, 
+        'rs_ratio': 9, 
+        'rs_mom': 10, 
+        'tail_5d': 11 
     };
     const idx = keyIdx[currentSort.key];
     if (idx) {
@@ -376,7 +377,11 @@ function updateSortHeaders() {
 function filterTable() {
     const search = document.getElementById('searchInput').value.trim().toUpperCase();
     const quadrant = document.getElementById('filterQuadrant').value;
-    filteredData = allData.filter(d => {
+    filteredData = allData.map(d => {
+        // Tính toán rrg_score ảo để sort nếu cần
+        d.rrg_score = parseFloat((d.total_score - d.mcdx_score).toFixed(2));
+        return d;
+    }).filter(d => {
         const matchSearch = !search || d.symbol.includes(search);
         const matchQuadrant = !quadrant || d.rrg_quadrant === quadrant;
         return matchSearch && matchQuadrant;
@@ -389,7 +394,7 @@ function renderTable() {
     const tbody = document.getElementById('tableBody');
 
     if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:48px; color:var(--text-muted);">Không có dữ liệu cho nhóm này. Hãy bấm Cập nhật ngay.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:48px; color:var(--text-muted);">Không có dữ liệu cho nhóm này. Hãy bấm Cập nhật ngay.</td></tr>`;
         document.getElementById('rowCount').textContent = 'Hiển thị 0 mã';
         return;
     }
@@ -397,6 +402,7 @@ function renderTable() {
     tbody.innerHTML = filteredData.map((d, i) => {
         const totalPct = (d.total_score / 2.0 * 100).toFixed(0);
         const totalClass = d.total_score >= 1.5 ? 'high' : d.total_score >= 0.8 ? 'mid' : 'low';
+        const rrgScore = (d.total_score - d.mcdx_score).toFixed(2);
 
         const rrgClasses = {
             "TĂNG GIÁ": "rrg-leading",
@@ -409,16 +415,17 @@ function renderTable() {
         return `<tr>
             <td class="col-rank">${i + 1}</td>
             <td><span class="symbol-badge">${d.symbol}</span></td>
-            <td><span class="score-val ${d.mcdx_score >= 0.8 ? 'high' : d.mcdx_score >= 0.4 ? 'mid' : 'low'}">${(d.mcdx_score || 0).toFixed(2)}</span></td>
-            <td><span class="banker-value ${(d.banker_left || 0) >= 16 ? 'hot' : (d.banker_left || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_left || 0).toFixed(1)}</span></td>
-            <td><span class="banker-value ${(d.banker_right || 0) >= 16 ? 'hot' : (d.banker_right || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_right || 0).toFixed(1)}</span></td>
-            <td><span class="rrg-badge ${rrgClasses[d.rrg_quadrant] || ''}">${rrgDots[d.rrg_quadrant] || ''} ${d.rrg_quadrant}</span></td>
             <td>
                 <div class="score-bar-wrap">
                     <div class="score-bar"><div class="score-bar-fill" style="width:${totalPct}%"></div></div>
                     <span class="score-val ${totalClass}">${d.total_score.toFixed(2)}</span>
                 </div>
             </td>
+            <td><span class="score-val ${d.mcdx_score >= 0.8 ? 'high' : d.mcdx_score >= 0.4 ? 'mid' : 'low'}">${(d.mcdx_score || 0).toFixed(2)}</span></td>
+            <td><span class="score-val ${rrgScore >= 0.8 ? 'high' : rrgScore >= 0.4 ? 'mid' : 'low'}">${rrgScore}</span></td>
+            <td><span class="rrg-badge ${rrgClasses[d.rrg_quadrant] || ''}">${rrgDots[d.rrg_quadrant] || ''} ${d.rrg_quadrant}</span></td>
+            <td><span class="banker-value ${(d.banker_left || 0) >= 16 ? 'hot' : (d.banker_left || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_left || 0).toFixed(1)}</span></td>
+            <td><span class="banker-value ${(d.banker_right || 0) >= 16 ? 'hot' : (d.banker_right || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_right || 0).toFixed(1)}</span></td>
             <td><span class="num-cell ${d.rs_ratio >= 100 ? 'above100' : 'below100'}">${d.rs_ratio.toFixed(2)}</span></td>
             <td><span class="num-cell ${d.rs_mom >= 100 ? 'above100' : 'below100'}">${d.rs_mom.toFixed(2)}</span></td>
             <td><span class="tail-value ${d.tail_5d >= 4 ? 'active' : ''}">${d.tail_5d.toFixed(2)}</span></td>
