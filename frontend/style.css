@@ -673,3 +673,82 @@ tbody tr:hover .symbol-badge {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+/* ============================================
+   HISTORY SPLIT SCREEN
+   ============================================ */
+.history-section {
+  padding: 20px 24px;
+  height: calc(100vh - 280px);
+  overflow: hidden;
+}
+.history-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+.history-top {
+  flex: 0 0 auto;
+}
+.history-bottom {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.history-card, .chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.history-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.input-symbol {
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 16px;
+  color: var(--text-primary);
+  outline: none;
+  width: 200px;
+}
+.btn-history-search {
+  background: var(--accent-blue);
+  color: white;
+  border: none;
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.history-table-wrapper {
+  overflow-y: auto;
+  max-height: 200px;
+}
+#historyTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+#historyTable th, #historyTable td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+#historyTable th {
+  color: var(--text-muted);
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+}
+.chart-card canvas {
+  width: 100% !important;
+  height: 100% !important;
+}

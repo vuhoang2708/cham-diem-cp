@@ -95,6 +95,29 @@ def export_to_json(category=None):
         json.dump(scores, f, ensure_ascii=False, indent=2)
     print(f"Exported {category if category else 'all'} scores to {json_path}")
 
+def get_history(symbol, start_date=None, end_date=None):
+    """Lấy lịch sử điểm của một mã cổ phiếu trong khoảng thời gian."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    query = 'SELECT * FROM scores WHERE symbol = ?'
+    params = [symbol]
+    
+    if start_date:
+        query += ' AND updated_date >= ?'
+        params.append(start_date)
+    if end_date:
+        query += ' AND updated_date <= ?'
+        params.append(end_date)
+        
+    query += ' ORDER BY updated_date DESC LIMIT 100' # Giới hạn để tránh quá tải
+    
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
 if __name__ == "__main__":
     init_db()
     export_to_json()

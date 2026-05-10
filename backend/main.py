@@ -30,6 +30,12 @@ async def read_scores(category: str = "vn30"):
     """Returns the latest scores for a specific category."""
     return get_latest_scores(category)
 
+@app.get("/api/history")
+async def read_history(symbol: str, start_date: str = None, end_date: str = None):
+    """Returns historical scores for a specific symbol."""
+    from database import get_history
+    return get_history(symbol, start_date, end_date)
+
 @app.get("/api/status")
 async def get_status(category: str = "vn30"):
     """Returns the current status for a specific category."""

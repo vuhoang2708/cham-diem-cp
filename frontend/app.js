@@ -10,6 +10,7 @@ let filteredData = [];
 let currentSort = { key: 'total_score', dir: -1 }; // -1 = desc
 let isRefreshing = false;
 let currentCategory = 'vn30'; // Mặc định là VN30
+let historyChart = null; // Biến lưu đồ thị
 
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,21 +36,146 @@ function switchTab(category) {
     // Update UI active state
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.innerText.toLowerCase().includes(category)) btn.classList.add('active');
+        // So sánh chính xác hoặc dùng class
     });
+    // Set active cho nút vừa bấm
+    event.currentTarget.classList.add('active');
     
-    // Đặc biệt cho Tab Custom
+    // Ẩn/Hiện các section
     const importSection = document.getElementById('importSection');
+    const historySection = document.getElementById('historySection');
+    const mainTableContainer = document.querySelector('.table-section');
+    const statsRow = document.querySelector('.stats-row');
+
     if (category === 'custom') {
         importSection.style.display = 'block';
+        historySection.style.display = 'none';
+        mainTableContainer.style.display = 'block';
+        statsRow.style.display = 'flex';
+    } else if (category === 'history') {
+        importSection.style.display = 'none';
+        historySection.style.display = 'block';
+        mainTableContainer.style.display = 'none';
+        statsRow.style.display = 'none';
     } else {
         importSection.style.display = 'none';
+        historySection.style.display = 'none';
+        mainTableContainer.style.display = 'block';
+        statsRow.style.display = 'flex';
     }
 
-    // Reset filter và load data mới
-    document.getElementById('searchInput').value = '';
-    document.getElementById('filterQuadrant').value = '';
-    fetchScores();
+    // Reset filter và load data mới (nếu không phải history)
+    if (category !== 'history') {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('filterQuadrant').value = '';
+        fetchScores();
+    }
+}
+
+// ---- History Logic ----
+async function loadHistory() {
+    const symbol = document.getElementById('historySymbol').value.trim().toUpperCase();
+    if (!symbol) return alert("Vui lòng nhập mã cổ phiếu!");
+
+    try {
+        const response = await fetch(`${API_BASE}/history?symbol=${symbol}`);
+        const data = await response.json();
+        
+        // Chỉ lấy 10 ngày gần nhất và đảo ngược để vẽ từ trái sang phải
+        const historyData = data.slice(0, 10).reverse();
+        
+        renderHistoryTable(historyData);
+        renderHistoryChart(historyData, symbol);
+    } catch (error) {
+        console.error("Error loading history:", error);
+        alert("Không thể tải dữ liệu lịch sử!");
+    }
+}
+
+function renderHistoryTable(data) {
+    const tbody = document.getElementById('historyTableBody');
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">Không có dữ liệu lịch sử cho mã này.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = data.slice().reverse().map(d => {
+        const rrgScore = (d.total_score - d.mcdx_score).toFixed(2);
+        return `<tr>
+            <td>${d.updated_date}</td>
+            <td style="color:var(--accent-blue); font-weight:600;">${d.mcdx_score.toFixed(2)}</td>
+            <td style="color:var(--accent-green); font-weight:600;">${rrgScore}</td>
+            <td style="font-weight:800;">${d.total_score.toFixed(2)}</td>
+            <td>${d.rrg_quadrant}</td>
+        </tr>`;
+    }).join('');
+}
+
+function renderHistoryChart(data, symbol) {
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    
+    const labels = data.map(d => d.updated_date.slice(5)); // Lấy MM-DD
+    const mcdxScores = data.map(d => d.mcdx_score);
+    const rrgScores = data.map(d => d.total_score - d.mcdx_score);
+    const totalScores = data.map(d => d.total_score);
+
+    if (historyChart) {
+        historyChart.destroy();
+    }
+
+    historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Tổng điểm',
+                    data: totalScores,
+                    borderColor: '#fbbf24',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: true
+                },
+                {
+                    label: 'MCDX Score',
+                    data: mcdxScores,
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointStyle: 'circle'
+                },
+                {
+                    label: 'RRG Score',
+                    data: rrgScores,
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointStyle: 'rectRot'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#94a3b8', font: { size: 12 } } },
+                title: { display: true, text: `Biến động 10 ngày của ${symbol}`, color: '#f8fafc', font: { size: 16 } }
+            },
+            scales: {
+                y: {
+                    min: 0,
+                    max: 2.1,
+                    ticks: { color: '#64748b' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                x: {
+                    ticks: { color: '#64748b' },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
 }
 
 // ---- API Calls ----

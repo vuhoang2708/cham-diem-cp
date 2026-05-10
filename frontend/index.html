@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -134,8 +135,48 @@
       <button class="tab-btn" onclick="switchTab('custom')">
         <span class="tab-icon">⭐</span> Danh mục tùy chỉnh
       </button>
+      <button class="tab-btn" onclick="switchTab('history')">
+        <span class="tab-icon">📜</span> Lịch sử 10 ngày
+      </button>
     </div>
   </nav>
+
+  <!-- ========== HISTORY SECTION (Split Screen) ========== -->
+  <section id="historySection" class="history-section" style="display: none;">
+    <div class="history-container">
+      <div class="history-top">
+        <div class="history-card">
+          <div class="history-filters">
+            <input type="text" id="historySymbol" placeholder="Nhập mã CP (VD: VCB)" class="input-symbol">
+            <button class="btn-history-search" onclick="loadHistory()">🔍 Tra cứu lịch sử</button>
+          </div>
+          
+          <div class="history-table-wrapper">
+            <table id="historyTable">
+              <thead>
+                <tr>
+                  <th>Ngày</th>
+                  <th>MCDX</th>
+                  <th>RRG</th>
+                  <th>Tổng</th>
+                  <th>Vùng</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Nhập mã và nhấn Tra cứu</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-bottom">
+        <div class="chart-card">
+          <canvas id="historyChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- ========== IMPORT SECTION (Hidden by default) ========== -->
   <section id="importSection" class="import-section" style="display: none;">
