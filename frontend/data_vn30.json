@@ -1,0 +1,28 @@
+[
+  {
+    "symbol": "ACB",
+    "category": "vn30",
+    "total_score": 0.25,
+    "mcdx_score": 0.0,
+    "banker_value": 0.0,
+    "rrg_quadrant": "GIẢM GIÁ",
+    "rs_ratio": 96.48,
+    "rs_mom": 99.65,
+    "tail_5d": 8.82,
+    "updated_at": "2026-05-10 15:56:49",
+    "updated_date": "2026-05-10"
+  },
+  {
+    "symbol": "BCM",
+    "category": "vn30",
+    "total_score": 0.25,
+    "mcdx_score": 0.0,
+    "banker_value": 0.0,
+    "rrg_quadrant": "GIẢM GIÁ",
+    "rs_ratio": 96.41,
+    "rs_mom": 99.59,
+    "tail_5d": 4.69,
+    "updated_at": "2026-05-10 15:57:21",
+    "updated_date": "2026-05-10"
+  }
+]
