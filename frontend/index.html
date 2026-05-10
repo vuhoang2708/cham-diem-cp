@@ -122,6 +122,33 @@
     </div>
   </section>
 
+  <!-- ========== TABS NAVIGATION ========== -->
+  <nav class="tabs-nav">
+    <div class="tabs-container">
+      <button class="tab-btn active" onclick="switchTab('vn30')">
+        <span class="tab-icon">🏆</span> VN30
+      </button>
+      <button class="tab-btn" onclick="switchTab('vn100')">
+        <span class="tab-icon">📊</span> VN100
+      </button>
+      <button class="tab-btn" onclick="switchTab('custom')">
+        <span class="tab-icon">⭐</span> Danh mục tùy chỉnh
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========== IMPORT SECTION (Hidden by default) ========== -->
+  <section id="importSection" class="import-section" style="display: none;">
+    <div class="import-card">
+      <h3>Nhập danh sách cổ phiếu tùy chỉnh</h3>
+      <p>Nhập các mã cổ phiếu cách nhau bởi dấu phẩy hoặc xuống dòng (Ví dụ: VCB, FPT, VIC...)</p>
+      <textarea id="customSymbolsInput" placeholder="VCB, FPT, HPG, VIC..."></textarea>
+      <div class="import-actions">
+        <button class="btn-save-list" onclick="saveCustomList()">Lưu danh sách</button>
+      </div>
+    </div>
+  </section>
+
   <!-- ========== TABLE SECTION ========== -->
   <section class="table-section">
     <div class="table-toolbar">
@@ -152,16 +179,19 @@
             <th class="col-symbol sortable" onclick="sortTable('symbol')">
               Mã CP <span class="sort-icon">↕</span>
             </th>
-            <th class="col-total sortable active-sort" onclick="sortTable('total')">
-              Tổng điểm <span class="sort-icon">↓</span>
-            </th>
             <th class="col-score sortable" onclick="sortTable('mcdx_score')">
               MCDX Score <span class="sort-icon">↕</span>
             </th>
-            <th class="col-value sortable" onclick="sortTable('banker_value')">
-              Banker Value <span class="sort-icon">↕</span>
+            <th class="col-value sortable" onclick="sortTable('banker_left')">
+              Banker (L) <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-value sortable" onclick="sortTable('banker_right')">
+              Banker (R) <span class="sort-icon">↕</span>
             </th>
             <th class="col-rrg">Vùng RRG</th>
+            <th class="col-total sortable active-sort" onclick="sortTable('total_score')">
+              Tổng điểm <span class="sort-icon">↓</span>
+            </th>
             <th class="col-num sortable" onclick="sortTable('rs_ratio')">
               RS-Ratio <span class="sort-icon">↕</span>
             </th>

@@ -1,11 +1,16 @@
 @echo off
-echo ========================================================
-echo KHOI DONG CHROME CHO HE THONG CHAM DIEM CO PHIEU
-echo ========================================================
-echo.
-echo Dang mo Chrome ho tro Automation...
-echo Vui long dang nhap vao Fireant.vn (chi can lan dau tien).
-echo KHONG DONG cua so Chrome nay trong qua trinh he thong dang chay!
-echo.
+set "CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe"
+set "PROFILE_PATH=%~dp0chrome_profile"
 
-"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="%CD%\chrome_profile"
+if not exist "%PROFILE_PATH%" mkdir "%PROFILE_PATH%"
+
+echo Khoi dong Chrome voi CDP port 9222...
+start "" "%CHROME_PATH%" ^
+    --remote-debugging-port=9222 ^
+    --user-data-dir="%PROFILE_PATH%" ^
+    --no-first-run ^
+    --no-default-browser-check ^
+    "https://fireant.vn/dashboard/content/symbols/VCB"
+
+echo Chrome da san sang. Hay dang nhap Fireant neu can.
+timeout /t 3

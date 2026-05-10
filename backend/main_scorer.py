@@ -6,17 +6,28 @@ from calculator_rrg import calculate_rrg
 from scraper_mcdx import MCDXScraper
 from database import init_db, save_score
 
-async def run_scoring():
-    print("Starting VN100 Scoring Process...")
+async def run_scoring(category='vn30', symbols=None):
+    print(f"Starting {category.upper()} Scoring Process...")
     init_db()
     
-    # Load symbols
-    symbols_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'vn100_symbols.json')
-    with open(symbols_path, 'r') as f:
-        symbols = json.load(f)
-    
+    # Load symbols dựa trên category nếu không được truyền vào
+    if symbols is None:
+        if category == 'vn30':
+            symbols_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'vn30_symbols.json')
+        elif category == 'vn100':
+            symbols_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'vn100_symbols.json')
+        else: # custom
+            symbols_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'custom_symbols.json')
+            
+        if os.path.exists(symbols_path):
+            with open(symbols_path, 'r') as f:
+                symbols = json.load(f)
+        else:
+            print(f"Error: Symbols file not found at {symbols_path}")
+            return
+
     # Get Benchmark data (VNINDEX)
-    print("Fetching VNINDEX data...")
+    print("Fetching VNINDEX data for RRG...")
     df_index = get_stock_data("VNINDEX", type='index')
     if df_index is None:
         print("Critical Error: Could not fetch VNINDEX data.")
@@ -26,22 +37,22 @@ async def run_scoring():
     scraper = MCDXScraper()
     connected = await scraper.connect()
     if not connected:
-        print("Critical Error: Could not connect to Chrome CDP. Please run start_chrome.bat first.")
+        print("Critical Error: Could not connect to Chrome CDP.")
         return
 
     results_count = 0
     total_symbols = len(symbols)
 
     for i, symbol in enumerate(symbols):
-        print(f"[{i+1}/{total_symbols}] Processing {symbol}...")
+        print(f"[{i+1}/{total_symbols}] Processing {symbol} in {category}...")
         
-        # 1. RRG Calculation
+        # 1. RRG Calculation (RS Ratio, RS Momentum, Score)
         df_stock = get_stock_data(symbol)
         rrg_res = None
         if df_stock is not None:
             rrg_res = calculate_rrg(df_stock, df_index)
             
-        # 2. MCDX Scraping
+        # 2. MCDX Scraping (Banker Value, MCDX Score)
         mcdx_res = await scraper.get_banker_value(symbol)
         
         if rrg_res and mcdx_res:
@@ -53,39 +64,41 @@ async def run_scoring():
                 'total_score': total_score,
                 'mcdx_score': mcdx_res['mcdx_score'],
                 'banker_value': mcdx_res['banker_value'],
+                'banker_left': mcdx_res.get('banker_left', 0),
+                'banker_right': mcdx_res.get('banker_right', 0),
                 'quadrant': rrg_res['quadrant'],
                 'rs_ratio': rrg_res['rs_ratio'],
                 'rs_mom': rrg_res['rs_mom'],
                 'tail_5d': rrg_res['tail_5d']
             }
             
-            # 4. Save to Database
-            save_score(data)
+            # 4. Save to Database với category
+            save_score(data, category=category)
             results_count += 1
             print(f"   Success: Total Score = {total_score}")
         else:
             print(f"   Failed to process {symbol}")
             
-        # Optional: small delay to not overwhelm Fireant
         await asyncio.sleep(1)
 
     await scraper.disconnect()
-    print(f"\nScoring process finished. Successfully processed {results_count}/{total_symbols} stocks.")
+    print(f"\n{category.upper()} process finished. Successfully processed {results_count}/{total_symbols} stocks.")
     
-    # 5. Export to JSON for Vercel
+    # 5. Export to JSON for Vercel (theo category)
     from database import export_to_json
-    export_to_json()
+    export_to_json(category=category)
     
-    # 6. Push to GitHub
+    # 6. Push to GitHub (nếu cần đồng bộ web)
     print("Pushing updated data to GitHub...")
     import subprocess
     try:
-        subprocess.run(["git", "add", "frontend/data.json"], check=True)
-        subprocess.run(["git", "commit", "-m", "data: update scores after scoring run"], check=True)
+        filename = f"data_{category}.json"
+        subprocess.run(["git", "add", f"frontend/{filename}"], check=True)
+        subprocess.run(["git", "commit", "-m", f"data: update {category} scores"], check=True)
         subprocess.run(["git", "push"], check=True)
-        print("GitHub push successful. Vercel will update shortly.")
+        print("GitHub push successful.")
     except Exception as e:
-        print(f"Failed to push to GitHub: {e}")
+        print(f"GitHub push skipped or failed: {e}")
 
 if __name__ == "__main__":
     asyncio.run(run_scoring())
