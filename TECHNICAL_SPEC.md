@@ -1,62 +1,44 @@
-# Tài liệu Kỹ thuật: Hệ thống Chấm điểm Cổ phiếu VN100
+# TECHNICAL SPECIFICATION: Hệ thống Chấm điểm Cổ phiếu VN100 (V2.0)
 
-Tài liệu này mô tả chi tiết thuật toán và quy trình xử lý dữ liệu cho Dashboard Chấm điểm Cổ phiếu.
+## 1. Tổng quan Kiến trúc
+Hệ thống được thiết kế theo mô hình Client-Server cục bộ, hỗ trợ quản lý đa danh mục (VN30, VN100, Custom) và theo dõi dữ liệu lịch sử.
 
-## 1. Quy trình lấy dữ liệu MCDX Banker (Fireant)
+## 2. Hạ tầng Dữ liệu (Database)
+- **Công nghệ**: SQLite.
+- **Schema bảng `scores`**:
+    - `symbol` (TEXT): Mã cổ phiếu.
+    - `category` (TEXT): Nhóm (vn30, vn100, custom).
+    - `updated_date` (DATE): Ngày cập nhật (YYYY-MM-DD).
+    - `total_score` (REAL): Điểm tổng hợp.
+    - `mcdx_score` (REAL): Điểm từ chỉ báo MCDX (0 - 1.0).
+    - `banker_left` (REAL): Giá trị Banker bên trái ký hiệu ∅.
+    - `banker_right` (REAL): Giá trị Banker bên phải ký hiệu ∅ (Backup).
+    - `rrg_quadrant` (TEXT): Vùng dòng tiền (Tăng giá, Tích lũy, Suy yếu, Giảm giá).
+    - `rs_ratio` / `rs_mom` (REAL): Chỉ số RRG.
+    - `tail_5d` (REAL): Độ dài đuôi 5 ngày.
+- **Primary Key**: `(symbol, category, updated_date)` - Cho phép lưu trữ lịch sử biến động mỗi ngày của mỗi mã.
 
-Đây là quy trình mô phỏng thao tác người dùng trên trình duyệt Chrome (thông qua Playwright/CDP).
+## 3. Backend (FastAPI)
+- **Serving Static**: FastAPI phục vụ trực tiếp thư mục `frontend/` tại cổng 8000.
+- **API Endpoints**:
+    - `GET /api/scores?category=...`: Lấy bảng điểm mới nhất của một nhóm.
+    - `GET /api/history?symbol=...`: Lấy dữ liệu 10 ngày gần nhất của một mã CP.
+    - `POST /api/refresh?category=...`: Kích hoạt tiến trình quét dữ liệu ngầm.
+    - `POST /api/import`: Lưu danh sách mã CP tùy chỉnh của người dùng.
 
-### Các bước thực hiện:
-1.  **Điều hướng**: Truy cập trực tiếp vào URL biểu đồ của mã CP: `https://fireant.vn/dashboard/content/symbols/{symbol}`.
-2.  **Chuyển Tab**: Click vào tab **"Biểu đồ"**.
-3.  **Thêm chỉ báo (Workflow f(x))**:
-    *   Click vào nút **Chỉ báo (f(x))** trên thanh công cụ biểu đồ.
-    *   Nhập từ khóa **"MCDX"** vào ô tìm kiếm.
-    *   Click chọn chỉ báo **"FireAnt - MCDX"** (hoặc FA MCDX).
-    *   Nhấn phím **ESC** để đóng cửa sổ danh sách chỉ báo.
-4.  **Đợi tính toán**: Chờ 5 giây để chỉ báo load và vẽ dữ liệu trên Canvas.
-5.  **Trích xuất Legend**:
-    *   Tìm thẻ `div` chứa nội dung chú giải có từ khóa **"MCDX"**.
-    *   Bóc tách dãy số hiển thị sau các tham số đầu vào.
-    *   **Vị trí Banker**: Lấy giá trị **thứ 2 hoặc thứ 3 tính từ phải qua** trong dãy số chính (trước các ký hiệu lưới ∅).
-6.  **Quy đổi điểm MCDX**:
-    *   Sử dụng nội suy tuyến tính dựa trên giá trị Banker (0-20):
-        *   0 -> 0.0 điểm
-        *   3 -> 0.2 điểm
-        *   8 -> 0.4 điểm
-        *   12 -> 0.6 điểm
-        *   16 -> 0.8 điểm
-        *   20 -> 1.0 điểm
+## 4. Frontend & Visualization
+- **Layout**: Split-screen (Chia đôi màn hình) cho Tab Lịch sử.
+- **Thư viện đồ thị**: Chart.js.
+- **Đồ thị Lịch sử (10 ngày)**:
+    - Trục X: Ngày (MM-DD).
+    - Trục Y: Điểm số (0 - 2.1).
+    - 3 Đường biểu diễn: Tổng điểm (Vàng), MCDX (Xanh dương), RRG (Xanh lá).
+- **Responsive**: Sử dụng Flexbox để đảm bảo bảng và biểu đồ tự động co giãn theo kích thước cửa sổ.
 
-## 2. Quy trình tính toán RRG (Relative Rotation Graph)
-
-Dữ liệu được tính toán dựa trên giá đóng cửa lịch sử (100 phiên gần nhất) lấy từ API `vnstock` (nguồn TCBS).
-
-### Các bước tính toán:
-1.  **Chuẩn bị**: Lấy giá đóng cửa của Mã CP và VNINDEX.
-2.  **Relative Strength (RS)**: `RS = Price_Stock / Price_Index`.
-3.  **RS-Ratio (Trục X)**:
-    *   `WMA_RS = Weighted_Moving_Average(RS, 14)`.
-    *   `RS_Ratio = 100 * (RS / WMA_RS)`.
-4.  **RS-Momentum (Trục Y)**:
-    *   `WMA_Ratio = Weighted_Moving_Average(RS_Ratio, 14)`.
-    *   `RS_Mom = 100 * (RS_Ratio / WMA_Ratio)`.
-5.  **Xác định Vùng RRG**:
-    *   **Leading (Tăng giá)**: `RS_Ratio >= 100` AND `RS_Mom >= 100` -> **1.0 điểm**.
-    *   **Improving (Tích lũy)**: `RS_Ratio < 100` AND `RS_Mom >= 100` -> **0.75 điểm**.
-    *   **Weakening (Suy yếu)**: `RS_Ratio >= 100` AND `RS_Mom < 100` -> **0.5 điểm**.
-    *   **Lagging (Giảm giá)**: `RS_Ratio < 100` AND `RS_Mom < 100` -> **0.25 điểm**.
-6.  **Tail 5D**: Khoảng cách Euclidean giữa các điểm (Ratio, Mom) của 5 phiên gần nhất.
-
-## 3. Tổng hợp điểm số (Total Score)
-
-`Tổng điểm = Điểm RRG + Điểm MCDX`
-*   **Điểm tối đa**: 2.0 điểm.
-*   **Sắp xếp**: Dashboard hiển thị danh sách sort từ cao xuống thấp theo Tổng điểm.
-
-## 4. Cơ chế cập nhật & Public
-
-1.  **Local**: Chạy script batch và python server trên máy để lấy session Fireant.
-2.  **Export**: Kết quả được xuất ra file `frontend/data.json`.
-3.  **Sync**: Tự động chạy `git push` để đẩy dữ liệu lên GitHub.
-4.  **Vercel**: Tự động redeploy và hiển thị dữ liệu mới nhất cho người xem công khai.
+## 5. Quy trình Quét dữ liệu (Scoring Logic)
+1.  **RRG Calculation**: Tải 100 nến ngày từ API chứng khoán để tính RS-Ratio và RS-Momentum.
+2.  **MCDX Scraping**:
+    - Điều hướng Playwright tới Fireant.
+    - Parse giá trị từ Legend (Legend Parsing).
+    - Logic xử lý ∅: Ưu tiên giá trị bên trái; nếu trái = 0 thì dùng bên phải.
+3.  **Final Scoring**: `Total = RRG_Score (0-1) + MCDX_Score (0-1)`.
