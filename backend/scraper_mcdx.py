@@ -192,10 +192,14 @@ class MCDXScraper:
                         # Tách legend theo ký hiệu ∅ (pi/null)
                         # Giá trị Banker đa phần nằm BÊN TRÁI ∅, nhưng có khi nằm BÊN PHẢI
                         # => Lưu CẢ 2 giá trị, tính điểm theo bên trái trước
-                        parts = legend_info.split('∅')
+                        # Tách legend theo các ký hiệu phân cách (∅, |, :, ...)
+                        # Sử dụng regex để tách linh hoạt hơn
+                        import re
+                        parts = re.split(r'[∅|:]', legend_info)
+                        
                         if len(parts) >= 2:
-                            left_part = parts[0]   # Phần bên trái ∅
-                            right_part = parts[1]  # Phần bên phải ∅
+                            left_part = parts[0]   # Phần bên trái
+                            right_part = parts[1]  # Phần bên phải
                             
                             left_numbers = re.findall(r'-?[\d.]+', left_part)
                             right_numbers = re.findall(r'-?[\d.]+', right_part)
@@ -203,17 +207,17 @@ class MCDXScraper:
                             banker_left = float(left_numbers[-1]) if left_numbers else 0.0
                             banker_right = float(right_numbers[0]) if right_numbers else 0.0
                             
-                            print(f"[{symbol}] Bên trái ∅: {banker_left}")
-                            print(f"[{symbol}] Bên phải ∅: {banker_right}")
+                            print(f"[{symbol}] Đã tách Banker: L={banker_left}, R={banker_right}")
                             
                             # Tính điểm: ưu tiên cột bên trái, nếu = 0 thì dùng bên phải làm backup
                             banker_value = banker_left if banker_left != 0.0 else banker_right
-                            banker_backup = banker_right if banker_left != 0.0 else banker_left
                         else:
-                            print(f"[{symbol}] Không tìm thấy ký hiệu ∅ trong legend!")
-                            decimal_numbers = re.findall(r'\d+\.\d{4}', legend_info)
-                            print(f"[{symbol}] Fallback values: {decimal_numbers}")
-                            banker_backup = 0.0
+                            print(f"[{symbol}] Không tìm thấy ký hiệu phân cách trong legend!")
+                            # Fallback: lấy số cuối cùng thấy được
+                            all_numbers = re.findall(r'-?[\d.]+', legend_info)
+                            banker_left = float(all_numbers[-1]) if all_numbers else 0.0
+                            banker_right = 0.0
+                            banker_value = banker_left
                         break
                 except:
                     continue
