@@ -3,7 +3,6 @@ import json
 import os
 from data_source import get_stock_data
 from calculator_rrg import calculate_rrg
-from scraper_mcdx import MCDXScraper
 from database import init_db, save_score
 
 USE_AMIBROKER = os.environ.get("DATA_SOURCE", "fireant").lower() == "amibroker"
@@ -11,6 +10,13 @@ USE_AMIBROKER = os.environ.get("DATA_SOURCE", "fireant").lower() == "amibroker"
 async def run_scoring(category='vn30', symbols=None):
     print(f"Starting {category.upper()} Scoring Process...")
     init_db()
+
+    if USE_AMIBROKER and category == 'vn30' and symbols is None:
+        from run_amibroker_vn30 import run_vn30_scoring
+        timeout = int(os.environ.get("AMIBROKER_TIMEOUT", "360"))
+        saved = run_vn30_scoring(timeout=timeout)
+        print(f"\nVN30 AmiBroker bridge finished. Successfully processed {saved}/30 stocks.")
+        return
     
     # Load symbols dựa trên category nếu không được truyền vào
     if symbols is None:
@@ -45,6 +51,7 @@ async def run_scoring(category='vn30', symbols=None):
             print("Critical Error: Cannot connect to AmiBroker. Is it open?")
             return
     else:
+        from scraper_mcdx import MCDXScraper
         scraper = MCDXScraper()
         connected = await scraper.connect()
         if not connected:
