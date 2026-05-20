@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<AmiBroker-Analysis CompactMode="0">
+<General>
+<FormatVersion>1</FormatVersion>
+<Symbol>VCB</Symbol>
+<FormulaPath>Imported\codex_fa_bridge_oneline.afl</FormulaPath>
+<FormulaContent>mcdx_Banker = FA_MCDX(50, 1.5, 50, 20);
+mcdx_HotMoney = FA_MCDX(40, 0.7, 30, 20);
+
+bc = Foreign("VNINDEX", "C");
+rs_ratio = FA_RRG(C, bc, 1);
+rs_mom = FA_RRG(C, bc, 0);
+
+bk = LastValue(mcdx_Banker);
+hm = LastValue(mcdx_HotMoney);
+rsr = LastValue(rs_ratio);
+rsm = LastValue(rs_mom);
+rsr_hi = rsr >= 100;
+rsm_hi = rsm >= 100;
+quad = IIf(rsr_hi AND rsm_hi, 1, IIf(rsr_hi AND NOT rsm_hi, 2, IIf(NOT rsr_hi AND NOT rsm_hi, 3, 4)));
+
+dx = rs_ratio - Ref(rs_ratio, -1);
+dy = rs_mom - Ref(rs_mom, -1);
+tail5d = LastValue(Sum(sqrt(dx * dx + dy * dy), 5));
+
+outfile = "C:/Users/Public/ag_fa_bridge_oneline_out.txt";
+fh = fopen(outfile, "w");
+fh_ok = 0;
+
+if (fh)
+{
+    fh_ok = 1;
+    out = "symbol=" + Name();
+    out = out + ";banker=" + NumToStr(bk, 1.6);
+    out = out + ";hotmoney=" + NumToStr(hm, 1.6);
+    out = out + ";rs_ratio=" + NumToStr(rsr, 1.6);
+    out = out + ";rs_mom=" + NumToStr(rsm, 1.6);
+    out = out + ";quadrant=" + NumToStr(quad, 1.0);
+    out = out + ";tail_5d=" + NumToStr(tail5d, 1.6);
+    out = out + ";ready=1";
+    fputs(out, fh);
+    fclose(fh);
+}
+
+Filter = 1;
+AddTextColumn(Name(), "symbol", 1.0);
+AddColumn(bk, "banker", 1.6);
+AddColumn(hm, "hotmoney", 1.6);
+AddColumn(rsr, "rs_ratio", 1.6);
+AddColumn(rsm, "rs_mom", 1.6);
+AddColumn(quad, "quadrant", 1.0);
+AddColumn(tail5d, "tail_5d", 1.6);
+AddColumn(fh_ok, "fh_ok", 1.0);</FormulaContent>
+<ApplyTo>1</ApplyTo>
+<RangeType>1</RangeType>
+<RangeAmount>1</RangeAmount>
+<FromDate>2020-01-01 00:00:00</FromDate>
+<ToDate>2026-12-31</ToDate>
+<SyncOnSelect>0</SyncOnSelect>
+<RunEvery>0</RunEvery>
+<RunEveryInterval>5min</RunEveryInterval>
+<IncludeFilter>
+<ExcludeMode>0</ExcludeMode>
+<OrSelection>0</OrSelection>
+<Favourite>0</Favourite>
+<Index>0</Index>
+<Type0>0</Type0><Category0>-1</Category0>
+<Type1>1</Type1><Category1>-1</Category1>
+<Type2>2</Type2><Category2>-1</Category2>
+<Type3>3</Type3><Category3>-1</Category3>
+<Type4>4</Type4><Category4>-1</Category4>
+<Type5>5</Type5><Category5>-1</Category5>
+<Type6>6</Type6><Category6>-1</Category6>
+</IncludeFilter>
+<ExcludeFilter>
+<ExcludeMode>1</ExcludeMode>
+<OrSelection>0</OrSelection>
+<Favourite>0</Favourite>
+<Index>0</Index>
+<Type0>0</Type0><Category0>-1</Category0>
+<Type1>1</Type1><Category1>-1</Category1>
+<Type2>2</Type2><Category2>-1</Category2>
+<Type3>3</Type3><Category3>-1</Category3>
+<Type4>4</Type4><Category4>-1</Category4>
+<Type5>5</Type5><Category5>-1</Category5>
+<Type6>6</Type6><Category6>-1</Category6>
+</ExcludeFilter>
+</General>
+<BacktestSettings>
+<InitialEquity>10000</InitialEquity>
+<TradeFlags>1</TradeFlags>
+<RangeType>1</RangeType>
+<RangeLength>1</RangeLength>
+<RangeFromDate>2020-01-01 00:00:00</RangeFromDate>
+<RangeToDate>2026-12-31</RangeToDate>
+<ApplyTo>1</ApplyTo>
+</BacktestSettings>
+</AmiBroker-Analysis>

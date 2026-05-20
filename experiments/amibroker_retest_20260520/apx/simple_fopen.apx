@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<AmiBroker-Analysis CompactMode="0">
+<General>
+<FormatVersion>1</FormatVersion>
+<Symbol>VCB</Symbol>
+<FormulaPath>CodexRetest\simple_fopen.afl</FormulaPath>
+<FormulaContent></FormulaContent>
+<ApplyTo>1</ApplyTo>
+<RangeType>0</RangeType>
+<RangeAmount>1</RangeAmount>
+<FromDate>2020-01-01 00:00:00</FromDate>
+<ToDate>2026-12-31</ToDate>
+<SyncOnSelect>0</SyncOnSelect>
+<RunEvery>0</RunEvery>
+<RunEveryInterval>5min</RunEveryInterval>
+<IncludeFilter>
+<ExcludeMode>0</ExcludeMode>
+<OrSelection>0</OrSelection>
+<Favourite>0</Favourite>
+<Index>0</Index>
+<Type0>0</Type0><Category0>-1</Category0>
+<Type1>1</Type1><Category1>-1</Category1>
+<Type2>2</Type2><Category2>-1</Category2>
+<Type3>3</Type3><Category3>-1</Category3>
+<Type4>4</Type4><Category4>-1</Category4>
+<Type5>5</Type5><Category5>-1</Category5>
+<Type6>6</Type6><Category6>-1</Category6>
+</IncludeFilter>
+<ExcludeFilter>
+<ExcludeMode>1</ExcludeMode>
+<OrSelection>0</OrSelection>
+<Favourite>0</Favourite>
+<Index>0</Index>
+<Type0>0</Type0><Category0>-1</Category0>
+<Type1>1</Type1><Category1>-1</Category1>
+<Type2>2</Type2><Category2>-1</Category2>
+<Type3>3</Type3><Category3>-1</Category3>
+<Type4>4</Type4><Category4>-1</Category4>
+<Type5>5</Type5><Category5>-1</Category5>
+<Type6>6</Type6><Category6>-1</Category6>
+</ExcludeFilter>
+</General>
+<BacktestSettings>
+<InitialEquity>10000</InitialEquity>
+<TradeFlags>1</TradeFlags>
+<RangeType>0</RangeType>
+<RangeLength>0</RangeLength>
+<RangeFromDate>2020-01-01 00:00:00</RangeFromDate>
+<RangeToDate>2026-12-31</RangeToDate>
+<ApplyTo>1</ApplyTo>
+</BacktestSettings>
+</AmiBroker-Analysis>

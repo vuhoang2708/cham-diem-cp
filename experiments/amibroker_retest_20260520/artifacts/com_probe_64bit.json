@@ -1,0 +1,83 @@
+{
+  "timestamp_utc": "2026-05-20T14:19:47.988889+00:00",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python_bitness": "64bit",
+  "probe": {
+    "Version": {
+      "ok": true,
+      "type": "str",
+      "repr": "'6.30.0'"
+    },
+    "AnalysisDocs": {
+      "ok": true,
+      "type": "CDispatch",
+      "repr": "<COMObject <unknown>>"
+    },
+    "Stocks": {
+      "ok": true,
+      "type": "CDispatch",
+      "repr": "<COMObject <unknown>>"
+    },
+    "Documents": {
+      "ok": true,
+      "type": "CDispatch",
+      "repr": "<COMObject <unknown>>"
+    },
+    "ActiveWindow": {
+      "ok": true,
+      "type": "CDispatch",
+      "repr": "<COMObject <unknown>>"
+    },
+    "ActiveDocument": {
+      "ok": true,
+      "type": "CDispatch",
+      "repr": "<COMObject <unknown>>"
+    },
+    "LoadDatabase": {
+      "ok": true,
+      "type": "method",
+      "repr": "<bound method LoadDatabase of <COMObject Broker.Application>>"
+    },
+    "SaveDatabase": {
+      "ok": true,
+      "type": "method",
+      "repr": "<bound method SaveDatabase of <COMObject Broker.Application>>"
+    },
+    "RefreshAll": {
+      "ok": true,
+      "type": "method",
+      "repr": "<bound method RefreshAll of <COMObject Broker.Application>>"
+    },
+    "Import": {
+      "ok": true,
+      "type": "method",
+      "repr": "<bound method Import of <COMObject Broker.Application>>"
+    },
+    "Log": {
+      "ok": true,
+      "type": "method",
+      "repr": "<bound method Log of <COMObject Broker.Application>>"
+    },
+    "Quit": {
+      "ok": true,
+      "type": "method",
+      "repr": "<bound method Quit of <COMObject Broker.Application>>"
+    },
+    "CategoryAddSymbol": {
+      "ok": false,
+      "error": "AttributeError: Broker.Application.CategoryAddSymbol"
+    },
+    "CategoryGetSymbols": {
+      "ok": false,
+      "error": "AttributeError: Broker.Application.CategoryGetSymbols"
+    },
+    "SendCommand": {
+      "ok": false,
+      "error": "AttributeError: Broker.Application.SendCommand"
+    },
+    "ExecuteFormula": {
+      "ok": false,
+      "error": "AttributeError: Broker.Application.ExecuteFormula"
+    }
+  }
+}

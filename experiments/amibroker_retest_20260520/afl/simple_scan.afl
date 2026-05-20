@@ -1,0 +1,3 @@
+Filter = Status("lastbarinrange");
+AddTextColumn(Name(), "symbol", 1.0);
+AddColumn(Close, "close", 1.2);

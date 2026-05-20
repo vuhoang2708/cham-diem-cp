@@ -1,0 +1,22 @@
+_SECTION_BEGIN("EXP_EXPORT_TEST");
+SetBarsRequired(10000, 0);
+
+banker = LastValue(FA_MCDX(50, 1.5, 50, 20));
+rrg = FA_RRG(20, 14);
+rs_ratio = LastValue(rrg[0]);
+rs_mom = LastValue(rrg[1]);
+
+quadrant = 4;
+if (rs_ratio >= 100 AND rs_mom >= 100) quadrant = 1;
+else if (rs_ratio < 100 AND rs_mom >= 100) quadrant = 2;
+else if (rs_ratio < 100 AND rs_mom < 100) quadrant = 3;
+
+Filter = 1;
+AddTextColumn(Name(), "symbol", 1.0);
+AddColumn(banker, "banker", 1.4);
+AddColumn(rs_ratio, "rs_ratio", 1.4);
+AddColumn(rs_mom, "rs_mom", 1.4);
+AddColumn(quadrant, "quadrant", 1.0);
+
+Plot(Close, "Close", colorDefault, styleCandle);
+_SECTION_END();

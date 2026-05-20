@@ -1,0 +1,17 @@
+outfile = "C:\\Users\\Public\\ag_simple_fopen_out.txt";
+fh = fopen(outfile, "w");
+fh_ok = 0;
+
+if (fh)
+{
+    fh_ok = 1;
+    fputs("symbol=" + Name() + "\n", fh);
+    fputs("close=" + NumToStr(LastValue(Close), 1.4) + "\n", fh);
+    fputs("ready=1\n", fh);
+    fclose(fh);
+}
+
+Filter = Status("lastbarinrange");
+AddTextColumn(Name(), "symbol", 1.0);
+AddColumn(Close, "close", 1.2);
+AddColumn(fh_ok, "fh_ok", 1.0);

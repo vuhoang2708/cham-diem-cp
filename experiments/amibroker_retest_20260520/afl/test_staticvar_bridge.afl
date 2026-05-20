@@ -1,0 +1,24 @@
+_SECTION_BEGIN("STATICVAR_BRIDGE_TEST");
+
+sym = Name();
+banker = LastValue(FA_MCDX(50, 1.5, 50, 20));
+rrg = FA_RRG(20, 14);
+rs_ratio = LastValue(rrg[0]);
+rs_mom = LastValue(rrg[1]);
+
+key_banker = "bridge_banker_" + sym;
+key_ratio = "bridge_ratio_" + sym;
+key_mom = "bridge_mom_" + sym;
+
+StaticVarSet(key_banker, banker);
+StaticVarSet(key_ratio, rs_ratio);
+StaticVarSet(key_mom, rs_mom);
+
+Filter = 1;
+AddTextColumn(sym, "symbol", 1.0);
+AddColumn(StaticVarGet(key_banker), "banker", 1.4);
+AddColumn(StaticVarGet(key_ratio), "rs_ratio", 1.4);
+AddColumn(StaticVarGet(key_mom), "rs_mom", 1.4);
+
+Plot(Close, "Close", colorDefault, styleCandle);
+_SECTION_END();

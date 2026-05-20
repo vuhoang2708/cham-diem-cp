@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<AmiBroker-Analysis CompactMode="0">
+<General>
+<FormatVersion>1</FormatVersion>
+<Symbol>VCB</Symbol>
+<FormulaPath>Imported\codex_force_rows_current.afl</FormulaPath>
+<FormulaContent>Buy = 1;
+Sell = 0;
+Filter = 1;
+
+AddTextColumn(Name(), "symbol", 1.0);
+AddColumn(DateTime(), "dt", formatDateTime);
+AddColumn(Close, "close", 1.2);
+AddColumn(Status("stocknum"), "stocknum", 1.0);</FormulaContent>
+<ApplyTo>1</ApplyTo>
+<RangeType>1</RangeType>
+<RangeAmount>1</RangeAmount>
+<FromDate>2020-01-01 00:00:00</FromDate>
+<ToDate>2026-12-31</ToDate>
+<SyncOnSelect>0</SyncOnSelect>
+<RunEvery>0</RunEvery>
+<RunEveryInterval>5min</RunEveryInterval>
+<IncludeFilter>
+<ExcludeMode>0</ExcludeMode>
+<OrSelection>0</OrSelection>
+<Favourite>0</Favourite>
+<Index>0</Index>
+<Type0>0</Type0><Category0>-1</Category0>
+<Type1>1</Type1><Category1>-1</Category1>
+<Type2>2</Type2><Category2>-1</Category2>
+<Type3>3</Type3><Category3>-1</Category3>
+<Type4>4</Type4><Category4>-1</Category4>
+<Type5>5</Type5><Category5>-1</Category5>
+<Type6>6</Type6><Category6>-1</Category6>
+</IncludeFilter>
+<ExcludeFilter>
+<ExcludeMode>1</ExcludeMode>
+<OrSelection>0</OrSelection>
+<Favourite>0</Favourite>
+<Index>0</Index>
+<Type0>0</Type0><Category0>-1</Category0>
+<Type1>1</Type1><Category1>-1</Category1>
+<Type2>2</Type2><Category2>-1</Category2>
+<Type3>3</Type3><Category3>-1</Category3>
+<Type4>4</Type4><Category4>-1</Category4>
+<Type5>5</Type5><Category5>-1</Category5>
+<Type6>6</Type6><Category6>-1</Category6>
+</ExcludeFilter>
+</General>
+<BacktestSettings>
+<InitialEquity>10000</InitialEquity>
+<TradeFlags>1</TradeFlags>
+<RangeType>1</RangeType>
+<RangeLength>1</RangeLength>
+<RangeFromDate>2020-01-01 00:00:00</RangeFromDate>
+<RangeToDate>2026-12-31</RangeToDate>
+<ApplyTo>1</ApplyTo>
+</BacktestSettings>
+</AmiBroker-Analysis>
