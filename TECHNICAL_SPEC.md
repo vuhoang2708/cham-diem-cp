@@ -36,9 +36,14 @@ Hệ thống được thiết kế theo mô hình Client-Server cục bộ, hỗ
 - **Responsive**: Sử dụng Flexbox để đảm bảo bảng và biểu đồ tự động co giãn theo kích thước cửa sổ.
 
 ## 5. Quy trình Quét dữ liệu (Scoring Logic)
-1.  **RRG Calculation**: Tải 100 nến ngày từ API chứng khoán để tính RS-Ratio và RS-Momentum.
+1.  **RRG Calculation**: Lấy dữ liệu từ AmiBroker qua OLE COM, tính RS-Ratio và RS-Momentum.
 2.  **MCDX Scraping**:
-    - Điều hướng Playwright tới Fireant.
-    - Parse giá trị từ Legend (Legend Parsing).
-    - Logic xử lý ∅: Ưu tiên giá trị bên trái; nếu trái = 0 thì dùng bên phải.
+    - Kết nối AmiBroker COM.
+    - Chạy file AFL `ami_bridge.afl` để tính MCDX Banker.
+    - Đọc giá trị từ StaticVar.
 3.  **Final Scoring**: `Total = RRG_Score (0-1) + MCDX_Score (0-1)`.
+
+### Prerequisites:
+- AmiBroker 6.0+ (bản Crack hoạt động)
+- FireAnt indicators cài trong AmiBroker
+- pywin32 cài trong Python environment

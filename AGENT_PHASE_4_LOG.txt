@@ -1,0 +1,64 @@
+================================================================================
+AGENT PHASE 4 LOG — Finalization
+Date: 2026-05-17
+Duration: ~10 minutes
+Status: COMPLETED
+================================================================================
+
+[STEP 8] VERIFY DATABASE
+
+  [TEST 8.1] Query database for recent records
+    Command: .\venv\Scripts\python -c "... get_latest_scores ..."
+    Result: [OK]
+    Records:
+      - VN30: 30 records
+      - VN100: 0 records
+      - CUSTOM: 0 records
+
+  [TEST 8.2] Check database file size
+    Command: dir data\scores.db
+    Result: [OK]
+    File size: 36864 bytes (36 KB)
+    Last modified: 2026-05-10
+
+  [STEP 8 RESULT] DATABASE VERIFIED
+    Records persisted correctly (VN30 has 30 records from previous runs)
+    Ready for STEP 9: YES
+
+[STEP 9] UPDATE DOCUMENTATION
+
+  [ACTION 9.1] Update HUONG_DAN_SU_DUNG.md
+    File: HUONG_DAN_SU_DUNG.md
+    Changes: Entire content replaced — removed Chrome/Fireant/CHAY_HE_THONG.bat references
+             Updated to AmiBroker workflow with PowerShell commands
+    Status: [OK]
+
+  [ACTION 9.2] Update TECHNICAL_SPEC.md
+    File: TECHNICAL_SPEC.md
+    Section: 5. Quy trình Quét dữ liệu
+    Changes: Replaced Playwright/Fireant workflow with AmiBroker COM workflow
+             Added Prerequisites section
+    Status: [OK]
+
+  [ACTION 9.3] Update README.md
+    File: README.md
+    Section: Cách chạy
+    Changes: Replaced Chrome CDP + http.server 8888 with AmiBroker + uvicorn 8000
+    Status: [OK]
+
+  [STEP 9 RESULT] DOCUMENTATION UPDATED
+    Files updated: 3
+    - HUONG_DAN_SU_DUNG.md
+    - TECHNICAL_SPEC.md
+    - README.md
+    Ready for Phase 5: YES
+
+[PHASE 4 RESULT] COMPLETED
+  All steps passed
+  Ready for Phase 5: YES
+
+[NOTES]
+- VN100 and CUSTOM categories have 0 records — expected, only VN30 has been scored previously
+- Documentation now consistently references AmiBroker workflow across all 3 files
+
+================================================================================

@@ -1,38 +1,44 @@
-# 📖 Hướng dẫn Sử dụng VN100 Stock Scorer
+# 📖 Hướng dẫn Sử dụng VN100 Stock Scorer (AmiBroker Version)
 
-Hệ thống chấm điểm cổ phiếu tự động dựa trên **MCDX (Dòng tiền nhà cái)** và **RRG (Chu kỳ sức mạnh giá)**.
+Hệ thống chấm điểm cổ phiếu tự động dựa trên **MCDX (Dòng tiền nhà cái)** và **RRG (Chu kỳ sức mạnh giá)** từ **AmiBroker**.
 
 ---
 
 ## 🚀 3 Bước Vận hành Hàng ngày
 
-### Bước 1: Khởi động hệ thống
-- Click đúp vào file **`CHAY_HE_THONG.bat`** ở thư mục gốc.
-- Hệ thống sẽ tự động mở Chrome (đã bật sẵn Fireant) và Dashboard.
+### Bước 1: Khởi động AmiBroker
+- Mở ứng dụng **AmiBroker** (phải đang chạy để hệ thống lấy dữ liệu).
+- Đảm bảo dữ liệu VN100 đã được load (File → Open → chọn database).
 
-### Bước 2: Kiểm tra Đăng nhập
-- Trong cửa sổ Chrome vừa hiện ra, hãy đảm bảo bạn đã **đăng nhập vào Fireant**.
-- Script sẽ tự động thao tác trên chính cửa sổ này của bạn.
+### Bước 2: Khởi động Dashboard
+- Mở Terminal/PowerShell tại thư mục gốc dự án.
+- Chạy lệnh:
+  ```bash
+  $env:DATA_SOURCE="amibroker"
+  .\venv\Scripts\python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+  ```
+- Mở trình duyệt: `http://localhost:8000`
 
 ### Bước 3: Chấm điểm & Cập nhật
-- Tại trang Dashboard (`http://localhost:8888`), nhấn nút **"Cập nhật ngay"**.
-- **Quan sát**: Trình duyệt sẽ tự động nhảy tab, thêm chỉ báo MCDX và lấy số.
-- Sau khi chạy xong (cho VN30 hoặc VN100), hệ thống sẽ tự động đẩy kết quả lên **Vercel** để bạn xem trên điện thoại hoặc khoe bạn bè.
+- Tại Dashboard, nhấn nút **"Cập nhật ngay"** cho danh mục mong muốn (VN30, VN100, Custom).
+- Hệ thống sẽ lấy dữ liệu từ AmiBroker (~2 phút cho VN100).
+- Kết quả hiển thị tự động sau khi hoàn thành.
 
 ---
 
 ## 🛠 Giải quyết sự cố thường gặp
 
-1.  **Nút "Cập nhật" không chạy?**
-    - Kiểm tra xem file `CHAY_HE_THONG.bat` có đang mở không.
-    - Đảm bảo terminal không báo lỗi kết nối Chrome (Port 9222).
+1. **Lỗi "Cannot connect to AmiBroker"?**
+   - Kiểm tra AmiBroker đã mở chưa.
+   - Kiểm tra file `ami_bridge.afl` tồn tại tại `C:\Program Files (x86)\AmiBroker\Formulas\Custom\`.
 
-2.  **Điểm MCDX bằng 0?**
-    - Đảm bảo trong Chrome đã load được biểu đồ Fireant.
-    - Nếu script không tự thêm được chỉ báo, hãy thử nhấn phím `f(x)` trên biểu đồ và thêm "FA MCDX" thủ công một lần.
+2. **Điểm MCDX bằng 0?**
+   - Kiểm tra FireAnt indicators đã cài trong AmiBroker (FA_MCDX, FA_RRG).
+   - Mở AmiBroker Editor, chạy `ami_bridge.afl` thủ công để xem lỗi.
 
-3.  **Muốn dừng giữa chừng?**
-    - Tắt cửa sổ Terminal (màu đen) đang chạy là hệ thống sẽ dừng.
+3. **Muốn dừng giữa chừng?**
+   - Nhấn Ctrl+C trong Terminal để dừng server.
 
 ---
+
 *Chúc bạn săn được những siêu cổ phiếu với dòng tiền cá mập mạnh nhất!* 📈

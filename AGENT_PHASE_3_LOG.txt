@@ -1,0 +1,66 @@
+================================================================================
+AGENT PHASE 3 LOG — Testing & Verification
+Date: 2026-05-17
+Duration: ~10 minutes
+Status: PARTIAL (AmiBroker not running at test time)
+================================================================================
+
+[STEP 5 PREREQUISITE] AmiBroker running check
+  Command: tasklist | findstr "AmiBroker"
+  Result: [NOT RUNNING]
+  Action: Skipped live COM tests (Steps 5.1, 5.2, 6.2, 6.3, 7.2, 7.3)
+          Module import and syntax tests still executed.
+
+[STEP 5] TEST — test_ami_connector.py
+  [TEST 5.1] Run test_ami_connector.py
+    Result: [SKIPPED] AmiBroker not running — COM connection would hang
+  [TEST 5.2] Verify output values
+    Result: [SKIPPED] Depends on 5.1
+  [RESULT] SKIPPED (requires AmiBroker running)
+
+[STEP 6] TEST — scraper_amibroker.py
+  [TEST 6.1] Module import
+    Command: .\venv\Scripts\python -c "import sys; sys.path.insert(0, 'backend'); from scraper_amibroker import AmiConnector; print('[OK] Module imported')"
+    Result: [OK]
+    Output: [OK] Module imported
+
+  [TEST 6.2] AmiConnector.connect()
+    Result: [SKIPPED] AmiBroker not running — COM connection would hang
+
+  [TEST 6.3] AmiConnector.get_data('VCB')
+    Result: [SKIPPED] Depends on 6.2
+
+  [RESULT] PARTIAL — import OK, live tests skipped
+
+[STEP 7] TEST — Full Pipeline
+  [TEST 7.1] Set DATA_SOURCE environment variable
+    Result: [OK] (env var mechanism verified via code review)
+
+  [TEST 7.2] Run scoring for 3 symbols
+    Result: [SKIPPED] AmiBroker not running
+
+  [TEST 7.3] Verify database records
+    Result: [SKIPPED] Depends on 7.2
+
+  [RESULT] SKIPPED (requires AmiBroker running)
+
+[SYNTAX CHECKS — All passed]
+  backend\test_ami_connector.py ... [OK]
+  backend\scraper_amibroker.py  ... [OK]
+  backend\main_scorer.py        ... [OK]
+
+[PHASE 3 RESULT] PARTIAL
+  Syntax checks: 3/3 passed
+  Module import: OK
+  Live COM tests: SKIPPED (AmiBroker not running)
+  Ready for Phase 4: YES (with caveat — live tests pending)
+
+[NOTES]
+- AmiBroker was not running at test time. User confirmed it was open earlier.
+- All code is syntactically correct and module imports work.
+- Live tests (COM connection, data fetch, full pipeline) must be run manually:
+    1. Open AmiBroker
+    2. Run: .\venv\Scripts\python backend\test_ami_connector.py
+    3. Run: $env:DATA_SOURCE="amibroker"; .\venv\Scripts\python -c "import asyncio, sys, os; sys.path.insert(0, 'backend'); os.chdir('backend'); import main_scorer; asyncio.run(main_scorer.run_scoring(category='vn30', symbols=['VCB', 'VHM', 'TCB']))"
+
+================================================================================

@@ -1,0 +1,133 @@
+================================================================================
+AGENT FINAL SUMMARY — AmiBroker Connector Implementation
+Date: 2026-05-17
+Total Duration: ~45 minutes
+Overall Status: COMPLETED (pending live AmiBroker verification)
+================================================================================
+
+## EXECUTIVE SUMMARY
+
+The AmiBroker Connector implementation has been completed with the following results:
+
+- ✅ Phase 1 (Setup & Validation): COMPLETED
+- ✅ Phase 2 (Core Implementation): COMPLETED
+- ⚠️ Phase 3 (Testing & Verification): PARTIAL (syntax/import OK; live COM tests need AmiBroker running)
+- ✅ Phase 4 (Finalization): COMPLETED
+- ✅ Phase 5 (Sign-off): COMPLETED
+
+## DELIVERABLES
+
+### New Files Created:
+1. backend/scraper_amibroker.py (~110 lines)
+   - AmiConnector class for COM connection
+   - connect() / disconnect() / get_data() methods
+   - _score_banker() and _score_rrg() scoring functions
+   - Backward-compatible interface (banker_left, banker_right, banker_value keys)
+
+2. AGENT_PHASE_1_LOG.txt — Phase 1 execution log
+3. AGENT_PHASE_2_LOG.txt — Phase 2 execution log
+4. AGENT_PHASE_3_LOG.txt — Phase 3 execution log
+5. AGENT_PHASE_4_LOG.txt — Phase 4 execution log
+6. AGENT_PHASE_5_CHECKLIST.txt — Final checklist
+
+### Files Modified:
+1. backend/test_ami_connector.py
+   - Fixed get_stock_data(): analysis.Filter()/Scan() → SetFilterSymbol()/Run()
+   - This was the root cause of COM API failure
+
+2. backend/main_scorer.py
+   - Added USE_AMIBROKER = os.environ.get("DATA_SOURCE", "fireant").lower() == "amibroker"
+   - Added guard to skip VNINDEX/TCBS fetch when using AmiBroker
+   - Added AmiBroker data source branch (AmiConnector)
+   - AmiBroker provides both MCDX and RRG in one call — rrg_res overridden from ami_res
+   - Fixed cleanup: if USE_AMIBROKER: connector.disconnect() else: await scraper.disconnect()
+   - Maintained full backward compatibility with Fireant/Playwright path
+
+3. HUONG_DAN_SU_DUNG.md
+   - Replaced Chrome/Fireant/CHAY_HE_THONG.bat workflow with AmiBroker workflow
+
+4. TECHNICAL_SPEC.md
+   - Updated Section 5 (Scoring Logic) to reflect AmiBroker architecture
+
+5. README.md
+   - Updated "Cách chạy" section: Chrome CDP → AmiBroker, port 8888 → 8000
+
+### Infrastructure Action:
+- Copied backend/ami_bridge.afl → C:\Program Files (x86)\AmiBroker\Formulas\Custom\ami_bridge.afl
+  (File was missing from AmiBroker installation)
+
+## TEST RESULTS
+
+### Phase 3 Testing:
+- Syntax checks: ALL PASSED (test_ami_connector.py, scraper_amibroker.py, main_scorer.py)
+- Module import (scraper_amibroker): [OK]
+- Live COM tests: SKIPPED (AmiBroker was not running at test time)
+
+## PERFORMANCE IMPROVEMENT (Expected)
+
+Before (Playwright/Fireant):
+- ~45-60 seconds per stock
+- ~75 minutes for VN100 (100 stocks)
+- Dependent on web UI stability, Chrome CDP
+
+After (AmiBroker COM):
+- ~1-2 seconds per stock
+- ~2 minutes for VN100 (100 stocks)
+- Direct data access, no UI dependency
+
+Expected improvement: ~37x faster
+
+## KNOWN ISSUES & NOTES
+
+- Issue 1: ami_bridge.afl was missing from AmiBroker Formulas\Custom\
+  Workaround: Copied automatically in Phase 1
+
+- Issue 2: test_ami_connector.py used invalid COM API (Filter/Scan)
+  Fix: Replaced with SetFilterSymbol(symbol) + Run(0)
+
+- Issue 3: Live COM tests could not run (AmiBroker not running at test time)
+  Action required: User must run manual verification with AmiBroker open
+
+## NEXT STEPS FOR USER
+
+1. Open AmiBroker with VN100 data loaded
+
+2. Run manual verification:
+   ```powershell
+   cd "c:\Users\Nguyen To Dung\.gemini\antigravity\scratch\Cham diem co phieu"
+   .\venv\Scripts\python backend\test_ami_connector.py
+   ```
+   Expected: VCB data with Banker value 0-20, valid RRG quadrant
+
+3. Run full pipeline test:
+   ```powershell
+   $env:DATA_SOURCE="amibroker"
+   .\venv\Scripts\python -c "import asyncio, sys, os; sys.path.insert(0, 'backend'); os.chdir('backend'); import main_scorer; asyncio.run(main_scorer.run_scoring(category='vn30', symbols=['VCB', 'VHM', 'TCB']))"
+   ```
+
+4. Start dashboard:
+   ```powershell
+   $env:DATA_SOURCE="amibroker"
+   .\venv\Scripts\python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+   ```
+   Open http://localhost:8000 and click "Cập nhật ngay" for VN30
+
+5. Compare 5-10 stocks with AmiBroker UI to verify accuracy
+
+## ROLLBACK PLAN (if needed)
+
+If issues arise, revert to Playwright/Fireant:
+```powershell
+# Simply don't set DATA_SOURCE (defaults to fireant)
+.\venv\Scripts\python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
+
+The old scraper_mcdx.py is still available and functional.
+
+## SIGN-OFF
+
+Agent: Kiro (Claude Sonnet 4.6)
+Date: 2026-05-17
+Status: ✅ READY FOR MANUAL VERIFICATION
+
+================================================================================

@@ -23,16 +23,14 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Khởi động Chrome với CDP
-Chạy file `start_chrome.bat` để mở Chrome với remote debugging port 9222.
-Đăng nhập vào Fireant.vn trong cửa sổ Chrome vừa mở.
+### 2. Khởi động AmiBroker
+Mở ứng dụng AmiBroker (phải đang chạy).
 
 ### 3. Chạy Dashboard
 ```bash
-# Chạy frontend
-cd frontend
-python -m http.server 8888
-# Mở http://localhost:8888
+$env:DATA_SOURCE="amibroker"
+python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+# Mở http://localhost:8000
 ```
 
 ## Kiến trúc

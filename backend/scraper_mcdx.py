@@ -113,31 +113,6 @@ class MCDXScraper:
             target = chart_frame if chart_frame else page
             print(f"[{symbol}] Dùng {'iframe' if chart_frame else 'page chính'} để thao tác.")
 
-            # 4. Click nút "Các chỉ báo" f(x) và thêm MCDX
-            print(f"[{symbol}] Đang mở menu f(x)...")
-            try:
-                indicators_btn = target.locator("div.js-button-text:text('Các chỉ báo')").first
-                await indicators_btn.click(force=True, timeout=10000)
-                print(f"[{symbol}] Đã click nút Các chỉ báo.")
-                await page.wait_for_timeout(1500)
-                
-                # Gõ MCDX vào ô tìm kiếm
-                print(f"[{symbol}] Đang gõ MCDX...")
-                search_input = target.locator("input[placeholder*='Tìm kiếm'], input[placeholder*='Search'], input[type='text']").first
-                await search_input.wait_for(state="visible", timeout=5000)
-                await search_input.click()
-                await search_input.fill("")
-                await search_input.type("MCDX", delay=100)
-                await page.wait_for_timeout(2000)
-                
-                # Chọn chỉ báo "FireAnt - MCDX" - click vào dòng chứa text
-                print(f"[{symbol}] Đang chọn FireAnt - MCDX...")
-                await page.wait_for_timeout(2000)  # Đợi kết quả tìm kiếm hiện
-                # Click trực tiếp vào text "MCDX" trong kết quả
-                mcdx_result = target.locator("text=MCDX").first
-                await mcdx_result.click(force=True, timeout=5000)
-                print(f"[{symbol}] Đã click MCDX trong kết quả.")
-                await page.wait_for_timeout(2000)
                 
                 # Đóng dialog bằng nút X (góc trên bên phải dialog)
                 close_btn = target.locator('[data-name="close"], button:has-text("×"), [class*="close"]').first
@@ -224,18 +199,19 @@ class MCDXScraper:
             
             # Chụp screenshot để verify
             await page.screenshot(path=f"debug_{symbol}.png")
-            print(f"[{symbol}] Banker = {banker_value} (backup = {banker_backup})")
+            print(f"[{symbol}] Banker = {banker_value}")
             
             return {
                 'banker_value': round(banker_value, 4),
-                'banker_backup': round(banker_backup, 4),
-                'banker_left': round(banker_left if 'banker_left' in dir() else 0.0, 4),
-                'banker_right': round(banker_right if 'banker_right' in dir() else 0.0, 4),
+                'banker_left': round(banker_left, 4),
+                'banker_right': round(banker_right, 4),
                 'mcdx_score': self.calculate_mcdx_score(banker_value)
             }
 
         except Exception as e:
             print(f"Error scraping {symbol}: {e}")
+            import traceback
+            traceback.print_exc()
             return None
         # KHÔNG đóng tab ở finally — vì ta dùng lại tab này cho mã tiếp theo
 

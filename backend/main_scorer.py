@@ -6,6 +6,8 @@ from calculator_rrg import calculate_rrg
 from scraper_mcdx import MCDXScraper
 from database import init_db, save_score
 
+USE_AMIBROKER = os.environ.get("DATA_SOURCE", "fireant").lower() == "amibroker"
+
 async def run_scoring(category='vn30', symbols=None):
     print(f"Starting {category.upper()} Scoring Process...")
     init_db()
@@ -26,19 +28,28 @@ async def run_scoring(category='vn30', symbols=None):
             print(f"Error: Symbols file not found at {symbols_path}")
             return
 
-    # Get Benchmark data (VNINDEX)
-    print("Fetching VNINDEX data for RRG...")
-    df_index = get_stock_data("VNINDEX", type='index')
-    if df_index is None:
-        print("Critical Error: Could not fetch VNINDEX data.")
-        return
+    # Get Benchmark data (VNINDEX) — only needed for Fireant/TCBS RRG mode
+    df_index = None
+    if not USE_AMIBROKER:
+        print("Fetching VNINDEX data for RRG...")
+        df_index = get_stock_data("VNINDEX", type='index')
+        if df_index is None:
+            print("Critical Error: Could not fetch VNINDEX data.")
+            return
 
-    # Setup Scraper
-    scraper = MCDXScraper()
-    connected = await scraper.connect()
-    if not connected:
-        print("Critical Error: Could not connect to Chrome CDP.")
-        return
+    # Setup data source
+    if USE_AMIBROKER:
+        from scraper_amibroker import AmiConnector
+        connector = AmiConnector()
+        if not connector.connect():
+            print("Critical Error: Cannot connect to AmiBroker. Is it open?")
+            return
+    else:
+        scraper = MCDXScraper()
+        connected = await scraper.connect()
+        if not connected:
+            print("Critical Error: Could not connect to Chrome CDP.")
+            return
 
     results_count = 0
     total_symbols = len(symbols)
@@ -46,14 +57,29 @@ async def run_scoring(category='vn30', symbols=None):
     for i, symbol in enumerate(symbols):
         print(f"[{i+1}/{total_symbols}] Processing {symbol} in {category}...")
         
-        # 1. RRG Calculation (RS Ratio, RS Momentum, Score)
-        df_stock = get_stock_data(symbol)
+        # 1. RRG Calculation (RS Ratio, RS Momentum, Score) — only for Fireant mode
         rrg_res = None
-        if df_stock is not None:
-            rrg_res = calculate_rrg(df_stock, df_index)
+        if not USE_AMIBROKER:
+            df_stock = get_stock_data(symbol)
+            if df_stock is not None:
+                rrg_res = calculate_rrg(df_stock, df_index)
             
-        # 2. MCDX Scraping (Banker Value, MCDX Score)
-        mcdx_res = await scraper.get_banker_value(symbol)
+        # 2. Lấy dữ liệu MCDX + RRG
+        if USE_AMIBROKER:
+            ami_res = connector.get_data(symbol)
+            if ami_res:
+                mcdx_res = ami_res
+                rrg_res = {
+                    "rrg_score": ami_res["rrg_score"],
+                    "quadrant":  ami_res["quadrant"],
+                    "rs_ratio":  ami_res["rs_ratio"],
+                    "rs_mom":    ami_res["rs_mom"],
+                    "tail_5d":   ami_res["tail_5d"],
+                }
+            else:
+                mcdx_res = None
+        else:
+            mcdx_res = await scraper.get_banker_value(symbol)
         
         if rrg_res and mcdx_res:
             # 3. Combine and Score
@@ -81,7 +107,11 @@ async def run_scoring(category='vn30', symbols=None):
             
         await asyncio.sleep(1)
 
-    await scraper.disconnect()
+    # Cleanup
+    if USE_AMIBROKER:
+        connector.disconnect()
+    else:
+        await scraper.disconnect()
     print(f"\n{category.upper()} process finished. Successfully processed {results_count}/{total_symbols} stocks.")
     
     # 5. Export to JSON for Vercel (theo category)

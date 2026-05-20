@@ -1,0 +1,66 @@
+// =========================================================
+// ANTIGRAVITY BRIDGE v2 - File-based Data Export
+// =========================================================
+// Writes MCDX + RRG results to a temp file for Python to read.
+// Python triggers this via AnalysisDocs, reads the output file.
+// =========================================================
+
+_SECTION_BEGIN("Antigravity Bridge");
+
+// --- 1. MCDX Banker ---
+RSIPeriodBanker     = 50;
+SensitivityBanker   = 1.5;
+RSIBaseBanker       = 50;
+mcdx_Retailer       = 20;
+RSIPeriodHotMoney   = 40;
+SensitivityHotMoney = 0.7;
+RSIBaseHotMoney     = 30;
+
+mcdx_Banker   = FA_MCDX(RSIPeriodBanker,   SensitivityBanker,   RSIBaseBanker,   mcdx_Retailer);
+mcdx_HotMoney = FA_MCDX(RSIPeriodHotMoney, SensitivityHotMoney, RSIBaseHotMoney, mcdx_Retailer);
+
+latest_Banker   = LastValue(mcdx_Banker);
+latest_HotMoney = LastValue(mcdx_HotMoney);
+
+// --- 2. RRG ---
+base     = "VNINDEX";
+bc       = Foreign(base, "C");
+rs_ratio = FA_RRG(C, bc, 1);
+rs_mom   = FA_RRG(C, bc, 0);
+
+latest_RSRatio = LastValue(rs_ratio);
+latest_RSMom   = LastValue(rs_mom);
+
+// --- 3. Quadrant ---
+quadrant = IIf(latest_RSRatio >= 100 AND latest_RSMom >= 100, 1,
+           IIf(latest_RSRatio >= 100 AND latest_RSMom <  100, 2,
+           IIf(latest_RSRatio <  100 AND latest_RSMom <  100, 3, 4)));
+
+// --- 4. Tail ---
+dx     = rs_ratio - Ref(rs_ratio, -1);
+dy     = rs_mom   - Ref(rs_mom,   -1);
+step   = sqrt(dx * dx + dy * dy);
+tail5d = Sum(step, 5);
+latest_Tail5D = LastValue(tail5d);
+
+// --- 5. Write to file ---
+outfile = "C:\\Windows\\Temp\\ag_bridge_out.txt";
+fh = fopen(outfile, "w");
+if (fh)
+{
+    fputs("banker=" + NumToStr(latest_Banker, 1.6) + "\n", fh);
+    fputs("hotmoney=" + NumToStr(latest_HotMoney, 1.6) + "\n", fh);
+    fputs("rs_ratio=" + NumToStr(latest_RSRatio, 1.6) + "\n", fh);
+    fputs("rs_mom=" + NumToStr(latest_RSMom, 1.6) + "\n", fh);
+    fputs("quadrant=" + NumToStr(quadrant, 1.0) + "\n", fh);
+    fputs("tail_5d=" + NumToStr(latest_Tail5D, 1.6) + "\n", fh);
+    fputs("symbol=" + Name() + "\n", fh);
+    fputs("ready=1\n", fh);
+    fclose(fh);
+}
+
+// --- 6. Plot ---
+Plot(mcdx_Banker,   "MCDX Banker", colorRed,    styleHistogram, 0, 20);
+Plot(mcdx_HotMoney, "HotMoney",    colorYellow, styleHistogram, 0, 20);
+
+_SECTION_END();

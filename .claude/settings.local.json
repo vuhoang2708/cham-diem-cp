@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(.\\\\venv\\\\Scripts\\\\python -c \"import win32com.client; print\\('[OK] pywin32 imported'\\)\")",
+      "PowerShell($amiPath = \"C:\\\\Program Files \\(x86\\)\\\\AmiBroker\\\\Formulas\\\\Custom\\\\ami_bridge.afl\"; if \\(Test-Path $amiPath\\) { \"FOUND: $amiPath\" } else { \"NOT FOUND: $amiPath\" }; $amiPath2 = \"C:\\\\Program Files\\\\AmiBroker\\\\Formulas\\\\Custom\\\\ami_bridge.afl\"; if \\(Test-Path $amiPath2\\) { \"FOUND: $amiPath2\" } else { \"NOT FOUND: $amiPath2\" })",
+      "PowerShell(Get-ChildItem \"C:\\\\Program Files \\(x86\\)\\\\AmiBroker\\\\Formulas\" -Recurse -Filter \"ami_bridge.afl\" 2>&1; Get-ChildItem \"C:\\\\Program Files\\\\AmiBroker\\\\Formulas\" -Recurse -Filter \"ami_bridge.afl\" 2>&1; Get-ChildItem \"$env:USERPROFILE\\\\Documents\" -Recurse -Filter \"ami_bridge.afl\" -ErrorAction SilentlyContinue 2>&1)",
+      "WebSearch",
+      "Bash(sleep 5 && cat \"/c/Users/NGUYEN~1/AppData/Local/Temp/claude/c--Users-Nguyen-To-Dung--gemini-antigravity-scratch-Cham-diem-co-phieu/1414e8c8-0094-4d7d-a83e-d1c50acb5ab8/tasks/biyqhmws2.output\" 2>&1 | head -50)",
+      "Read(//c/Users/NGUYEN~1/AppData/Local/Temp/claude/c--Users-Nguyen-To-Dung--gemini-antigravity-scratch-Cham-diem-co-phieu/1414e8c8-0094-4d7d-a83e-d1c50acb5ab8/tasks/**)",
+      "PowerShell(Get-Process)"
+    ]
+  }
+}

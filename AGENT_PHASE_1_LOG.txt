@@ -1,0 +1,72 @@
+================================================================================
+AGENT PHASE 1 LOG — Setup & Validation
+Date: 2026-05-17
+Duration: ~5 minutes
+Status: COMPLETED
+================================================================================
+
+[STEP 1] PRE-FLIGHT CHECKS
+
+  [TEST 1.1] pywin32 import
+    Command: .\venv\Scripts\python -c "import win32com.client; print('[OK] pywin32 imported')"
+    Result: [OK]
+    Output: [OK] pywin32 imported
+
+  [TEST 1.2] ami_bridge.afl source file
+    Path: backend\ami_bridge.afl
+    Result: [OK]
+    File size: 3051 bytes
+
+  [TEST 1.3] ami_bridge.afl in AmiBroker Formulas folder
+    Expected path: C:\Program Files (x86)\AmiBroker\Formulas\Custom\ami_bridge.afl
+    Result: [COPIED]
+    Action: File was NOT present — copied from backend\ami_bridge.afl to Formulas\Custom\
+    Status: [OK] File now present at target path
+
+  [TEST 1.4] backend\main_scorer.py exists
+    Result: [OK] (3919 bytes, last modified 2026-05-10)
+
+  [TEST 1.5] backend\test_ami_connector.py exists
+    Result: [OK] (5328 bytes, last modified 2026-05-16)
+
+  [TEST 1.6] backend\scraper_amibroker.py exists
+    Result: [NOT FOUND] — will be created in Phase 2
+
+  [STEP 1 RESULT] PRE-FLIGHT CHECKS PASSED (with 1 action taken)
+    - pywin32: OK
+    - ami_bridge.afl source: OK
+    - ami_bridge.afl in AmiBroker: COPIED (was missing, now fixed)
+    - main_scorer.py: OK
+    - test_ami_connector.py: OK
+    - scraper_amibroker.py: Not yet created (Phase 2)
+
+[STEP 2] FIX test_ami_connector.py
+
+  [ACTION 2.1] Fix get_stock_data() COM API
+    File: backend\test_ami_connector.py
+    Problem: Used invalid COM methods analysis.Filter() and analysis.Scan()
+    Fix: Replaced with correct API:
+      - analysis.Filter(0, "x") + analysis.Filter(symbol, "x") → analysis.SetFilterSymbol(symbol)
+      - analysis.Scan(0) → analysis.Run(0)
+    Status: [OK]
+
+  [ACTION 2.2] Syntax check after fix
+    Command: .\venv\Scripts\python -m py_compile backend\test_ami_connector.py
+    Result: [OK] No syntax errors
+
+  [STEP 2 RESULT] FIX APPLIED AND VALIDATED
+    File: backend\test_ami_connector.py
+    Changes: 3 lines replaced (Filter/Scan → SetFilterSymbol/Run)
+    Syntax: Valid
+    Ready for Phase 2: YES
+
+[PHASE 1 RESULT] COMPLETED
+  All checks passed (1 file copied, 1 file fixed)
+  Ready for Phase 2: YES
+
+[NOTES]
+- ami_bridge.afl was missing from AmiBroker Formulas\Custom\ — copied automatically
+- COM API fix: SetFilterSymbol(symbol) + Run(0) is the correct AmiBroker COM API
+- scraper_amibroker.py does not exist yet — will be created in Phase 2
+
+================================================================================

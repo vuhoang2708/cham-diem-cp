@@ -1,0 +1,87 @@
+================================================================================
+AGENT PHASE 2 LOG — Core Implementation
+Date: 2026-05-17
+Duration: ~10 minutes
+Status: COMPLETED
+================================================================================
+
+[STEP 3] CREATE backend/scraper_amibroker.py
+
+  [ACTION 3.1] Create backend/scraper_amibroker.py
+    Result: [OK] File created
+
+  [ACTION 3.2] Write code to backend/scraper_amibroker.py
+    Lines written: ~110
+    Classes: AmiConnector
+    Functions: connect(), disconnect(), get_data(), _score_banker(), _score_rrg()
+    Status: [OK]
+
+  [ACTION 3.3] Syntax check
+    Command: .\venv\Scripts\python -m py_compile backend\scraper_amibroker.py
+    Result: [OK] No syntax errors
+
+  [ACTION 3.4] Import test
+    Command: .\venv\Scripts\python -c "import sys; sys.path.insert(0, 'backend'); from scraper_amibroker import AmiConnector; print('[OK] Module imported')"
+    Result: [OK] Module imported
+
+  [STEP 3 RESULT] MODULE CREATED AND VALIDATED
+    File: backend/scraper_amibroker.py
+    Syntax: Valid
+    Import: OK
+    Ready for STEP 4: YES
+
+[STEP 4] MODIFY backend/main_scorer.py
+
+  [ACTION 4.1] Add USE_AMIBROKER import
+    Location: After "from database import init_db, save_score"
+    Code added: USE_AMIBROKER = os.environ.get("DATA_SOURCE", "fireant").lower() == "amibroker"
+    Status: [OK]
+
+  [ACTION 4.2] Skip VNINDEX fetch when using AmiBroker
+    Location: VNINDEX fetch block
+    Change: Wrapped in "if not USE_AMIBROKER:" guard
+    Status: [OK]
+
+  [ACTION 4.3] Replace scraper initialization
+    Location: "# Setup Scraper" block
+    Old code: MCDXScraper() + scraper.connect()
+    New code: if USE_AMIBROKER: AmiConnector().connect() else: MCDXScraper().connect()
+    Status: [OK]
+
+  [ACTION 4.4] Skip TCBS RRG calculation when using AmiBroker
+    Location: "# 1. RRG Calculation" block
+    Change: Wrapped in "if not USE_AMIBROKER:" guard
+    Status: [OK]
+
+  [ACTION 4.5] Replace MCDX scraping logic
+    Location: "# 2. MCDX Scraping" block
+    Old code: mcdx_res = await scraper.get_banker_value(symbol)
+    New code: if USE_AMIBROKER: ami_res = connector.get_data(symbol) + override rrg_res
+              else: mcdx_res = await scraper.get_banker_value(symbol)
+    Status: [OK]
+
+  [ACTION 4.6] Add cleanup section
+    Location: After main loop, before print()
+    Code added: if USE_AMIBROKER: connector.disconnect() else: await scraper.disconnect()
+    Status: [OK]
+
+  [ACTION 4.7] Syntax check
+    Command: .\venv\Scripts\python -m py_compile backend\main_scorer.py
+    Result: [OK] No syntax errors
+
+  [STEP 4 RESULT] FILE MODIFIED AND VALIDATED
+    File: backend/main_scorer.py
+    Changes: 6 sections modified
+    Syntax: Valid
+    Ready for Phase 3: YES
+
+[PHASE 2 RESULT] COMPLETED
+  All steps passed
+  Ready for Phase 3: YES
+
+[NOTES]
+- Added guard to skip VNINDEX/TCBS fetch when USE_AMIBROKER=True (performance improvement)
+- AmiBroker provides both MCDX and RRG data in one call — rrg_res is overridden from ami_res
+- Backward compatibility maintained: Fireant/Playwright path unchanged
+
+================================================================================
