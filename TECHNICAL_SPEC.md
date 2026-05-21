@@ -44,11 +44,13 @@ Các cột chính:
 | `total_score` | Tổng điểm đã cộng các component |
 | `mcdx_score` | Điểm MCDX Banker |
 | `rrg_score` | Điểm RRG quadrant |
-| `extra_score` | Tổng điểm từ các component mở rộng |
+| `adx_score` | Điểm ADX V1, tối đa 0.5 |
+| `extra_score` | Tổng điểm từ các component mở rộng, hiện gồm ADX |
 | `score_max` | Điểm tối đa lý thuyết của bộ component hiện tại |
 | `score_components` | JSON chi tiết từng component score |
 | `banker_value`, `banker_left`, `banker_right` | Giá trị MCDX |
 | `rrg_quadrant`, `rs_ratio`, `rs_mom`, `tail_5d` | Dữ liệu RRG |
+| `adx_value`, `di_plus`, `di_minus`, `adx_1d`, `adx_3d` | Raw ADX/DMI audit fields |
 | `updated_at`, `updated_date` | Timestamp lưu kết quả |
 
 `init_db()` có migration nhẹ để thêm các cột scoring mở rộng nếu database cũ chưa có.
@@ -71,8 +73,9 @@ Hiện tại:
 
 - `mcdx_score`: 0.00 - 1.00.
 - `rrg_score`: 0.25 - 1.00.
-- `extra_score`: 0.00.
-- `score_max`: 2.00.
+- `adx_score`: 0.00 - 0.50.
+- `extra_score`: hiện bằng `adx_score`.
+- `score_max`: 2.50.
 
 MCDX Banker dùng breakpoints:
 
@@ -93,6 +96,13 @@ RRG dùng output native của `FA_RRG`, trục chia tại `0`, không phải `10
 | TÍCH LŨY | `rs_ratio < 0` and `rs_mom >= 0` | 0.75 |
 | SUY YẾU | `rs_ratio >= 0` and `rs_mom < 0` | 0.50 |
 | GIẢM GIÁ | `rs_ratio < 0` and `rs_mom < 0` | 0.25 |
+
+ADX V1:
+
+- Nếu `DI+ <= DI-`: `adx_score = 0`.
+- ADX base dùng thang bậc: `<15 = 0`, `15-20 = 0.10`, `20-25 = 0.30`, `25-40 = 0.60`, `40-50 = 0.80`, `50+ = 0.90`.
+- Cộng/trừ theo `ADX_today - ADX_yesterday`, `ADX_today - ADX_3d`, và `DI+ - DI-`.
+- Raw score được nhân `0.5`, nên ADX tối đa 0.5 điểm.
 
 ## 5. Adding New Indicators
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VN100 Stock Scorer — Dashboard Chấm Điểm Cổ Phiếu</title>
-  <meta name="description" content="Dashboard chấm điểm và xếp hạng cổ phiếu VN100 dựa trên chỉ báo MCDX Banker Smart Money và vị trí RRG.">
+  <meta name="description" content="Dashboard chấm điểm và xếp hạng cổ phiếu VN30 dựa trên MCDX, RRG và ADX.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -228,6 +228,9 @@
             </th>
             <th class="col-score sortable" onclick="sortTable('rrg_score')">
               RRG Score <span class="sort-icon">↕</span>
+            </th>
+            <th class="col-score sortable" onclick="sortTable('adx_score')">
+              ADX Score <span class="sort-icon">↕</span>
             </th>
             <th class="col-rrg">Vùng RRG</th>
             <th class="col-value sortable" onclick="sortTable('banker_left')">

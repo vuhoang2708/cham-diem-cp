@@ -64,8 +64,10 @@ symbol=VCB;banker=5.891842;hotmoney=17.589798;rs_ratio=-1.213547;rs_mom=0.990822
 
 - `mcdx_score`: điểm dòng tiền Banker, tối đa 1.0.
 - `rrg_score`: điểm vùng RRG, tối đa 1.0.
-- `extra_score`: điểm cộng thêm cho các chỉ báo mới, hiện mặc định 0.
-- `total_score = mcdx_score + rrg_score + extra_score`.
+- `adx_score`: điểm xu hướng nội tại từ ADX/DI, tối đa 0.5 trong V1.
+- `extra_score`: tổng các điểm mở rộng ngoài MCDX/RRG, hiện gồm ADX.
+- `total_score = mcdx_score + rrg_score + adx_score`.
+- `score_max = 2.5`.
 
 ## Lỗi thường gặp
 

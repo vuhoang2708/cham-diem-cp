@@ -15,7 +15,7 @@ except ImportError:  # pragma: no cover - Windows runtime dependency
     win32com = None
 
 from database import export_to_json, init_db, save_score
-from scoring import build_base_score_from_raw, quadrant_name
+from scoring import build_score_payload, quadrant_name, score_adx, score_banker, score_rrg
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
@@ -69,6 +69,13 @@ dx = rs_ratio - Ref(rs_ratio, -1);
 dy = rs_mom - Ref(rs_mom, -1);
 tail5d = LastValue(Sum(sqrt(dx * dx + dy * dy), 5));
 
+adx_period = 14;
+adx_val = LastValue(ADX(adx_period));
+dip_val = LastValue(PDI(adx_period));
+dim_val = LastValue(MDI(adx_period));
+adx_1d = LastValue(Ref(ADX(adx_period), -1));
+adx_3d = LastValue(Ref(ADX(adx_period), -3));
+
 fh_ok = 0;
 
 if (is_target)
@@ -85,6 +92,11 @@ if (is_target)
         out = out + ";rs_mom=" + NumToStr(rsm, 1.6);
         out = out + ";quadrant=" + NumToStr(quad, 1.0);
         out = out + ";tail_5d=" + NumToStr(tail5d, 1.6);
+        out = out + ";adx=" + NumToStr(adx_val, 1.6);
+        out = out + ";di_plus=" + NumToStr(dip_val, 1.6);
+        out = out + ";di_minus=" + NumToStr(dim_val, 1.6);
+        out = out + ";adx_1d=" + NumToStr(adx_1d, 1.6);
+        out = out + ";adx_3d=" + NumToStr(adx_3d, 1.6);
         out = out + ";ready=1";
         fputs(out, fh);
         fclose(fh);
@@ -99,6 +111,11 @@ AddColumn(rsr, "rs_ratio", 1.6);
 AddColumn(rsm, "rs_mom", 1.6);
 AddColumn(quad, "quadrant", 1.0);
 AddColumn(tail5d, "tail_5d", 1.6);
+AddColumn(adx_val, "adx", 1.6);
+AddColumn(dip_val, "di_plus", 1.6);
+AddColumn(dim_val, "di_minus", 1.6);
+AddColumn(adx_1d, "adx_1d", 1.6);
+AddColumn(adx_3d, "adx_3d", 1.6);
 AddColumn(fh_ok, "fh_ok", 1.0);
 """
 
@@ -261,8 +278,19 @@ def load_result(symbol: str) -> dict | None:
     rs_mom = parse_float(raw.get("rs_mom"))
     tail_5d = parse_float(raw.get("tail_5d"))
     quadrant_num = parse_int(raw.get("quadrant"))
+    adx_value = parse_float(raw.get("adx"))
+    di_plus = parse_float(raw.get("di_plus"))
+    di_minus = parse_float(raw.get("di_minus"))
+    adx_1d = parse_float(raw.get("adx_1d"))
+    adx_3d = parse_float(raw.get("adx_3d"))
 
-    score_payload = build_base_score_from_raw(banker, quadrant_num)
+    adx_score = score_adx(adx_value, di_plus, di_minus, adx_1d, adx_3d)
+    score_payload = build_score_payload(
+        mcdx_score=score_banker(banker),
+        rrg_score=score_rrg(quadrant_num),
+        extra_components={"adx": adx_score},
+        extra_component_maxes={"adx": 0.5},
+    )
     return {
         "symbol": symbol,
         **score_payload,
@@ -273,6 +301,12 @@ def load_result(symbol: str) -> dict | None:
         "rs_ratio": round(rs_ratio, 2),
         "rs_mom": round(rs_mom, 2),
         "tail_5d": round(tail_5d, 2),
+        "adx_value": round(adx_value, 2),
+        "di_plus": round(di_plus, 2),
+        "di_minus": round(di_minus, 2),
+        "adx_1d": round(adx_1d, 2),
+        "adx_3d": round(adx_3d, 2),
+        "adx_score": adx_score,
     }
 
 
@@ -288,7 +322,8 @@ def save_dashboard(symbols: list[str]) -> int:
         saved += 1
         log(
             f"{symbol}: total={data['total_score']:.2f} "
-            f"banker={data['banker_value']:.4f} rrg={data['quadrant']}"
+            f"banker={data['banker_value']:.4f} rrg={data['quadrant']} "
+            f"adx={data['adx_value']:.2f}/{data['adx_score']:.2f}"
         )
 
     export_to_json(category="vn30")

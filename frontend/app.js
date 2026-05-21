@@ -25,6 +25,10 @@ function normalizeScoreRow(row) {
         normalized.rrg_score,
         normalized.total_score - normalized.mcdx_score
     );
+    normalized.adx_score = toNumber(
+        normalized.adx_score,
+        normalized.score_components && normalized.score_components.adx_score
+    );
     normalized.extra_score = toNumber(
         normalized.extra_score,
         Math.max(normalized.total_score - normalized.mcdx_score - normalized.rrg_score, 0)
@@ -143,6 +147,7 @@ function renderHistoryChart(data, symbol) {
     const labels = data.map(d => d.updated_date.slice(5)); // Lấy MM-DD
     const mcdxScores = data.map(d => d.mcdx_score);
     const rrgScores = data.map(d => normalizeScoreRow(d).rrg_score);
+    const adxScores = data.map(d => normalizeScoreRow(d).adx_score);
     const totalScores = data.map(d => d.total_score);
     const yMax = Math.max(2.1, ...data.map(d => normalizeScoreRow(d).score_max + 0.1));
 
@@ -179,6 +184,14 @@ function renderHistoryChart(data, symbol) {
                     borderWidth: 2,
                     tension: 0.3,
                     pointStyle: 'rectRot'
+                },
+                {
+                    label: 'ADX Score',
+                    data: adxScores,
+                    borderColor: '#f97316',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointStyle: 'triangle'
                 }
             ]
         },
@@ -384,11 +397,12 @@ function updateSortHeaders() {
         'total_score': 3, 
         'mcdx_score': 4, 
         'rrg_score': 5,
-        'banker_left': 7, 
-        'banker_right': 8, 
-        'rs_ratio': 9, 
-        'rs_mom': 10, 
-        'tail_5d': 11 
+        'adx_score': 6,
+        'banker_left': 8,
+        'banker_right': 9,
+        'rs_ratio': 10,
+        'rs_mom': 11,
+        'tail_5d': 12
     };
     const idx = keyIdx[currentSort.key];
     if (idx) {
@@ -417,7 +431,7 @@ function renderTable() {
     const tbody = document.getElementById('tableBody');
 
     if (filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center; padding:48px; color:var(--text-muted);">Không có dữ liệu cho nhóm này. Hãy bấm Cập nhật ngay.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" style="text-align:center; padding:48px; color:var(--text-muted);">Không có dữ liệu cho nhóm này. Hãy bấm Cập nhật ngay.</td></tr>`;
         document.getElementById('rowCount').textContent = 'Hiển thị 0 mã';
         return;
     }
@@ -426,6 +440,7 @@ function renderTable() {
         const totalPct = Math.min(100, d.total_score / d.score_max * 100).toFixed(0);
         const totalClass = d.total_score >= 1.5 ? 'high' : d.total_score >= 0.8 ? 'mid' : 'low';
         const rrgScore = d.rrg_score.toFixed(2);
+        const adxClass = d.adx_score >= 0.4 ? 'high' : d.adx_score >= 0.2 ? 'mid' : 'low';
 
         const rrgClasses = {
             "TĂNG GIÁ": "rrg-leading",
@@ -446,6 +461,7 @@ function renderTable() {
             </td>
             <td><span class="score-val ${d.mcdx_score >= 0.8 ? 'high' : d.mcdx_score >= 0.4 ? 'mid' : 'low'}">${(d.mcdx_score || 0).toFixed(2)}</span></td>
             <td><span class="score-val ${rrgScore >= 0.8 ? 'high' : rrgScore >= 0.4 ? 'mid' : 'low'}">${rrgScore}</span></td>
+            <td><span class="score-val ${adxClass}">${d.adx_score.toFixed(2)}</span></td>
             <td><span class="rrg-badge ${rrgClasses[d.rrg_quadrant] || ''}">${rrgDots[d.rrg_quadrant] || ''} ${d.rrg_quadrant}</span></td>
             <td><span class="banker-value ${(d.banker_left || 0) >= 16 ? 'hot' : (d.banker_left || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_left || 0).toFixed(1)}</span></td>
             <td><span class="banker-value ${(d.banker_right || 0) >= 16 ? 'hot' : (d.banker_right || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_right || 0).toFixed(1)}</span></td>
@@ -460,9 +476,9 @@ function renderTable() {
 
 // ---- Export CSV ----
 function exportCSV() {
-    const headers = ['STT','Mã CP','Tổng điểm','MCDX Score','RRG Score','Điểm thêm','Banker Left','Banker Right','Vùng RRG','RS-Ratio','RS-Mom','Tail 5D'];
+    const headers = ['STT','Mã CP','Tổng điểm','MCDX Score','RRG Score','ADX Score','Điểm thêm','Banker Left','Banker Right','Vùng RRG','RS-Ratio','RS-Mom','Tail 5D'];
     const rows = filteredData.map((d, i) =>
-        [i+1, d.symbol, d.total_score.toFixed(2), d.mcdx_score.toFixed(2), d.rrg_score.toFixed(2), d.extra_score.toFixed(2), d.banker_left, d.banker_right, d.rrg_quadrant,
+        [i+1, d.symbol, d.total_score.toFixed(2), d.mcdx_score.toFixed(2), d.rrg_score.toFixed(2), d.adx_score.toFixed(2), d.extra_score.toFixed(2), d.banker_left, d.banker_right, d.rrg_quadrant,
          d.rs_ratio.toFixed(2), d.rs_mom.toFixed(2), d.tail_5d.toFixed(2)].join(',')
     );
     const csv = [headers.join(','), ...rows].join('\n');

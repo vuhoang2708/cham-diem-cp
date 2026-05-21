@@ -12,14 +12,16 @@ File này là checklist ngắn để thêm chỉ báo mới vào hệ thống đ
 ## Điểm hiện tại
 
 ```text
-total_score = mcdx_score + rrg_score + extra_score
+total_score = mcdx_score + rrg_score + adx_score + other_extra_scores
 ```
 
 Trong đó:
 
 - `mcdx_score`: từ Banker `FA_MCDX`.
 - `rrg_score`: từ quadrant `FA_RRG`.
-- `extra_score`: tổng các component mở rộng.
+- `adx_score`: từ `ADX(14)` + `PDI(14)`/`MDI(14)`, max 0.5 trong V1.
+- `extra_score`: tổng các component mở rộng ngoài MCDX/RRG, hiện gồm ADX.
+- `score_max`: hiện là 2.5.
 
 ## Quy trình thêm chỉ báo
 
@@ -34,6 +36,9 @@ payload = build_score_payload(
     rrg_score=rrg_score,
     extra_components={
         "volume": volume_score,
+    },
+    extra_component_maxes={
+        "volume": 1.0,
     },
 )
 ```

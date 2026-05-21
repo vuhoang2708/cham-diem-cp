@@ -1,7 +1,7 @@
 # Đề xuất kỹ thuật: Tích hợp ADX Score
 
 **Ngày:** 2026-05-21  
-**Trạng thái:** Đã phê duyệt công thức V1 — sẵn sàng implement
+**Trạng thái:** Đã implement công thức V1
 
 ---
 

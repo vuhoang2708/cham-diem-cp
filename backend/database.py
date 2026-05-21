@@ -36,6 +36,12 @@ def init_db():
         "extra_score": "ALTER TABLE scores ADD COLUMN extra_score REAL DEFAULT 0",
         "score_max": "ALTER TABLE scores ADD COLUMN score_max REAL DEFAULT 2",
         "score_components": "ALTER TABLE scores ADD COLUMN score_components TEXT",
+        "adx_value": "ALTER TABLE scores ADD COLUMN adx_value REAL DEFAULT 0",
+        "di_plus": "ALTER TABLE scores ADD COLUMN di_plus REAL DEFAULT 0",
+        "di_minus": "ALTER TABLE scores ADD COLUMN di_minus REAL DEFAULT 0",
+        "adx_1d": "ALTER TABLE scores ADD COLUMN adx_1d REAL DEFAULT 0",
+        "adx_3d": "ALTER TABLE scores ADD COLUMN adx_3d REAL DEFAULT 0",
+        "adx_score": "ALTER TABLE scores ADD COLUMN adx_score REAL DEFAULT 0",
     }
     for column, statement in migrations.items():
         if column not in columns:
@@ -62,8 +68,8 @@ def save_score(data, category='vn100'):
     
     cursor.execute('''
         INSERT OR REPLACE INTO scores 
-        (symbol, category, total_score, mcdx_score, rrg_score, extra_score, score_max, score_components, banker_value, banker_left, banker_right, rrg_quadrant, rs_ratio, rs_mom, tail_5d, updated_at, updated_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (symbol, category, total_score, mcdx_score, rrg_score, extra_score, score_max, score_components, banker_value, banker_left, banker_right, rrg_quadrant, rs_ratio, rs_mom, tail_5d, adx_value, di_plus, di_minus, adx_1d, adx_3d, adx_score, updated_at, updated_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         data['symbol'],
         category,
@@ -80,6 +86,12 @@ def save_score(data, category='vn100'):
         data['rs_ratio'],
         data['rs_mom'],
         data['tail_5d'],
+        data.get('adx_value', 0),
+        data.get('di_plus', 0),
+        data.get('di_minus', 0),
+        data.get('adx_1d', 0),
+        data.get('adx_3d', 0),
+        data.get('adx_score', data.get('score_components', {}).get('adx_score', 0) if isinstance(data.get('score_components'), dict) else 0),
         updated_at,
         updated_date
     ))

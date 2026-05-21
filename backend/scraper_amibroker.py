@@ -32,10 +32,10 @@ except ImportError:
 
 try:
     from backend.create_apx import create_apx, OUTPUT_FILE
-    from backend.scoring import score_banker, score_rrg
+    from backend.scoring import score_adx, score_banker, score_rrg
 except ImportError:  # Allows running from the backend directory.
     from create_apx import create_apx, OUTPUT_FILE
-    from scoring import score_banker, score_rrg
+    from scoring import score_adx, score_banker, score_rrg
 
 APX_PATH = r"C:\Users\Public\ag_bridge.apx"
 POLL_INTERVAL = 0.5   # seconds between output-file polls
@@ -141,6 +141,12 @@ def _build_result(parsed: dict) -> dict:
     rs_mom   = f("rs_mom")
     quadrant = int(f("quadrant", 3))
     tail_5d  = f("tail_5d")
+    adx_value = f("adx")
+    di_plus = f("di_plus")
+    di_minus = f("di_minus")
+    adx_1d = f("adx_1d")
+    adx_3d = f("adx_3d")
+    adx_score = score_adx(adx_value, di_plus, di_minus, adx_1d, adx_3d)
 
     return {
         "symbol":       parsed.get("symbol", ""),
@@ -152,6 +158,12 @@ def _build_result(parsed: dict) -> dict:
         "tail_5d":      tail_5d,
         "mcdx_score":   score_banker(banker),
         "rrg_score":    score_rrg(quadrant),
+        "adx_score":    adx_score,
+        "adx_value":    adx_value,
+        "di_plus":      di_plus,
+        "di_minus":     di_minus,
+        "adx_1d":       adx_1d,
+        "adx_3d":       adx_3d,
         "banker_left":  banker,
         "banker_right": hotmoney,
         "banker_value": banker,

@@ -42,6 +42,13 @@ dx = rs_ratio - Ref(rs_ratio, -1);
 dy = rs_mom   - Ref(rs_mom,   -1);
 tail5d = LastValue(Sum(sqrt(dx * dx + dy * dy), 5));
 
+adx_period = 14;
+adx_val = LastValue(ADX(adx_period));
+dip_val = LastValue(PDI(adx_period));
+dim_val = LastValue(MDI(adx_period));
+adx_1d = LastValue(Ref(ADX(adx_period), -1));
+adx_3d = LastValue(Ref(ADX(adx_period), -3));
+
 outfile = "{output_file}";
 fh = fopen(outfile, "w");
 fh_ok = 0;
@@ -56,6 +63,11 @@ if (fh)
     out = out + ";rs_mom="   + NumToStr(rsm,    1.6);
     out = out + ";quadrant=" + NumToStr(quad,   1.0);
     out = out + ";tail_5d="  + NumToStr(tail5d, 1.6);
+    out = out + ";adx="      + NumToStr(adx_val, 1.6);
+    out = out + ";di_plus="  + NumToStr(dip_val, 1.6);
+    out = out + ";di_minus=" + NumToStr(dim_val, 1.6);
+    out = out + ";adx_1d="   + NumToStr(adx_1d, 1.6);
+    out = out + ";adx_3d="   + NumToStr(adx_3d, 1.6);
     out = out + ";ready=1";
     fputs(out, fh);
     fclose(fh);
@@ -69,6 +81,11 @@ AddColumn(rsr,    "rs_ratio", 1.6);
 AddColumn(rsm,    "rs_mom",   1.6);
 AddColumn(quad,   "quadrant", 1.0);
 AddColumn(tail5d, "tail_5d",  1.6);
+AddColumn(adx_val, "adx", 1.6);
+AddColumn(dip_val, "di_plus", 1.6);
+AddColumn(dim_val, "di_minus", 1.6);
+AddColumn(adx_1d, "adx_1d", 1.6);
+AddColumn(adx_3d, "adx_3d", 1.6);
 AddColumn(fh_ok,  "fh_ok",   1.0);
 """
 

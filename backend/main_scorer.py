@@ -91,9 +91,17 @@ async def run_scoring(category='vn30', symbols=None):
         
         if rrg_res and mcdx_res:
             # 3. Combine score components
+            extra_components = {}
+            extra_component_maxes = {}
+            if USE_AMIBROKER and ami_res and "adx_score" in ami_res:
+                extra_components["adx"] = ami_res["adx_score"]
+                extra_component_maxes["adx"] = 0.5
+
             score_payload = build_score_payload(
                 mcdx_score=mcdx_res['mcdx_score'],
                 rrg_score=rrg_res['rrg_score'],
+                extra_components=extra_components,
+                extra_component_maxes=extra_component_maxes,
             )
             
             data = {
@@ -105,7 +113,13 @@ async def run_scoring(category='vn30', symbols=None):
                 'quadrant': rrg_res['quadrant'],
                 'rs_ratio': rrg_res['rs_ratio'],
                 'rs_mom': rrg_res['rs_mom'],
-                'tail_5d': rrg_res['tail_5d']
+                'tail_5d': rrg_res['tail_5d'],
+                'adx_score': ami_res.get('adx_score', 0) if USE_AMIBROKER and ami_res else 0,
+                'adx_value': ami_res.get('adx_value', 0) if USE_AMIBROKER and ami_res else 0,
+                'di_plus': ami_res.get('di_plus', 0) if USE_AMIBROKER and ami_res else 0,
+                'di_minus': ami_res.get('di_minus', 0) if USE_AMIBROKER and ami_res else 0,
+                'adx_1d': ami_res.get('adx_1d', 0) if USE_AMIBROKER and ami_res else 0,
+                'adx_3d': ami_res.get('adx_3d', 0) if USE_AMIBROKER and ami_res else 0,
             }
             
             # 4. Save to Database với category

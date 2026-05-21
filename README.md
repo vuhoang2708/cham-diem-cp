@@ -5,7 +5,7 @@ Dashboard chấm điểm và xếp hạng **30 cổ phiếu trong rổ VN30** b�
 Baseline hiện tại sau retest ngày 2026-05-20:
 
 - Nguồn dữ liệu chính: AmiBroker COM + FireAnt AFL functions.
-- Chỉ báo đang dùng: `FA_MCDX` và `FA_RRG`.
+- Chỉ báo đang dùng: `FA_MCDX`, `FA_RRG`, `ADX/PDI/MDI`.
 - Dashboard local: FastAPI + SQLite + frontend tĩnh.
 - Dashboard public: https://cham-diem-cp.vercel.app
 
@@ -50,7 +50,8 @@ Có thể chạy batch VN30 trực tiếp:
 |---|---|---|
 | `mcdx_score` | `FA_MCDX(50, 1.5, 50, 20)` Banker | 0.00 - 1.00 |
 | `rrg_score` | Quadrant từ `FA_RRG(C, VNINDEX, ...)` | 0.25 - 1.00 |
-| `extra_score` | Chưa dùng, dành cho chỉ báo mới | 0.00 hiện tại |
+| `adx_score` | `ADX(14)` + `PDI(14)`/`MDI(14)` | 0.00 - 0.50 |
+| `extra_score` | Tổng các điểm mở rộng ngoài MCDX/RRG | Hiện gồm ADX |
 
 Quy đổi RRG:
 
@@ -60,6 +61,15 @@ Quy đổi RRG:
 | TÍCH LŨY | `rs_ratio < 0`, `rs_mom >= 0` | 0.75 |
 | SUY YẾU | `rs_ratio >= 0`, `rs_mom < 0` | 0.50 |
 | GIẢM GIÁ | `rs_ratio < 0`, `rs_mom < 0` | 0.25 |
+
+### ADX V1
+
+ADX chỉ cộng điểm khi `DI+ > DI-`. Điểm nền dùng thang bậc, có thưởng/phạt theo ADX hôm qua và ADX 3 ngày trước. V1 giới hạn ADX tối đa `0.5` điểm để tránh double-count xu hướng với RRG.
+
+```text
+total_score = mcdx_score + rrg_score + adx_score
+score_max = 2.5
+```
 
 ## Chuẩn bị mở rộng chỉ báo
 
