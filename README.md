@@ -1,61 +1,81 @@
-# VN100 Stock Scorer 📈
+# Chấm điểm cổ phiếu VN30
 
-Dashboard tự động chấm điểm và xếp hạng cổ phiếu trong danh mục **VN100** dựa trên:
+Dashboard chấm điểm và xếp hạng **30 cổ phiếu trong rổ VN30** bằng dữ liệu lấy trực tiếp từ AmiBroker.
 
-- **MCDX Banker Smart Money** — Chỉ số dòng tiền lớn từ Fireant.vn
-- **RRG Quadrant** — Vị trí vùng Relative Rotation Graph (tính từ giá)
+Baseline hiện tại sau retest ngày 2026-05-20:
 
-## Tính năng
+- Nguồn dữ liệu chính: AmiBroker COM + FireAnt AFL functions.
+- Chỉ báo đang dùng: `FA_MCDX` và `FA_RRG`.
+- Dashboard local: FastAPI + SQLite + frontend tĩnh.
+- Dashboard public: https://cham-diem-cp.vercel.app
 
-- ✅ Bảng xếp hạng cổ phiếu theo điểm tổng (cao → thấp)
-- ✅ Hiển thị: Tổng điểm | MCDX score | Banker value | Vùng RRG | RS-Ratio | RS-Mom | Tail 5D
-- ✅ Filter theo vùng RRG, tìm kiếm theo mã CP
-- ✅ Export CSV
-- ✅ Tự động cập nhật lúc 16:05 hàng ngày
-- ✅ Nút Refresh thủ công với progress bar realtime
+## Luồng chính
 
-## Cách chạy
+1. `backend/run_amibroker_vn30.py` đọc `data/vn30_symbols.json`.
+2. Script tạo AFL runtime tại `D:\MetakitData\AmibrokerFA\EOD\Formulas\Imported\ag_vn30_bridge.afl`.
+3. Script tạo APX runtime tại `C:\Users\Public\ag_vn30_bridge.apx`.
+4. AmiBroker chạy Exploration cho toàn bộ database nhưng AFL chỉ ghi output cho 30 mã VN30.
+5. Mỗi mã ghi một file chứng cứ tại `C:\Users\Public\ag_vn30_bridge\ami_vn30_<SYMBOL>.txt`.
+6. Python parse output, lưu SQLite, export `frontend/data_vn30.json`.
+7. Frontend đọc API local hoặc fallback sang JSON tĩnh trên Vercel.
 
-### 1. Cài đặt môi trường
-```bash
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-```
+## Cách chạy local
 
-### 2. Khởi động AmiBroker
-Mở ứng dụng AmiBroker (phải đang chạy).
+Mở AmiBroker trước, đảm bảo database EOD và FireAnt plugin đã sẵn sàng.
 
-### 3. Chạy Dashboard
-```bash
+```powershell
+cd backend
 $env:DATA_SOURCE="amibroker"
-python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
-# Mở http://localhost:8000
+$env:AMIBROKER_TIMEOUT="360"
+..\venv\Scripts\python -m uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-## Kiến trúc
+Mở dashboard:
 
-```
-├── backend/
-│   ├── test_playwright.py     # Test kết nối Chrome CDP
-│   ├── test_tcbs_api.py       # Test tính toán RRG
-│   └── (các module đang xây dựng)
-├── frontend/
-│   ├── index.html             # Dashboard UI
-│   ├── style.css              # Dark theme
-│   └── app.js                 # Logic + mock data
-├── data/                      # Dữ liệu (không commit)
-├── start_chrome.bat           # Khởi động Chrome với CDP
-└── requirements.txt
+```text
+http://127.0.0.1:8000/
 ```
 
-## Thang điểm
+Có thể chạy batch VN30 trực tiếp:
 
-| Tiêu chí | Thang điểm |
-|---|---|
-| MCDX Banker: 0→3→8→12→16→20 | 0→0.2→0.4→0.6→0.8→1.0 (nội suy tuyến tính) |
-| RRG Tăng giá (Leading) | 1.00 |
-| RRG Tích lũy (Improving) | 0.75 |
-| RRG Suy yếu (Weakening) | 0.50 |
-| RRG Giảm giá (Lagging) | 0.25 |
-| **Tổng điểm tối đa** | **2.00** |
+```powershell
+.\venv\Scripts\python backend\run_amibroker_vn30.py --timeout 360
+```
+
+## Scoring hiện tại
+
+Điểm tổng hiện được cộng từ các component trong `backend/scoring.py`.
+
+| Component | Nguồn | Thang điểm |
+|---|---|---|
+| `mcdx_score` | `FA_MCDX(50, 1.5, 50, 20)` Banker | 0.00 - 1.00 |
+| `rrg_score` | Quadrant từ `FA_RRG(C, VNINDEX, ...)` | 0.25 - 1.00 |
+| `extra_score` | Chưa dùng, dành cho chỉ báo mới | 0.00 hiện tại |
+
+Quy đổi RRG:
+
+| Vùng | Điều kiện FA_RRG native | Điểm |
+|---|---|---|
+| TĂNG GIÁ | `rs_ratio >= 0`, `rs_mom >= 0` | 1.00 |
+| TÍCH LŨY | `rs_ratio < 0`, `rs_mom >= 0` | 0.75 |
+| SUY YẾU | `rs_ratio >= 0`, `rs_mom < 0` | 0.50 |
+| GIẢM GIÁ | `rs_ratio < 0`, `rs_mom < 0` | 0.25 |
+
+## Chuẩn bị mở rộng chỉ báo
+
+Khi cần cộng thêm chỉ báo mới vào điểm:
+
+1. Lấy thêm giá trị trong AFL runtime hoặc Python connector.
+2. Viết hàm quy đổi giá trị đó thành điểm 0-1 trong `backend/scoring.py`.
+3. Truyền component mới vào `build_score_payload(extra_components={...})`.
+4. Lưu qua `database.save_score`; schema đã có `extra_score`, `score_max`, `score_components`.
+5. Frontend đã đọc `rrg_score` riêng và dùng `score_max`, nên thêm điểm mới không làm sai cột RRG.
+
+## File quan trọng
+
+- `backend/run_amibroker_vn30.py`: batch bridge AmiBroker cho VN30.
+- `backend/scoring.py`: nơi quản lý công thức cộng điểm.
+- `backend/database.py`: SQLite + JSON export.
+- `backend/main_scorer.py`: endpoint refresh gọi bridge AmiBroker khi `DATA_SOURCE=amibroker`.
+- `frontend/data_vn30.json`: dữ liệu public cho Vercel.
+- `CHANGES_20260520.md`: ghi chú retest và nguyên nhân lỗi APX cũ.

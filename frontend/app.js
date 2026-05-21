@@ -1,5 +1,5 @@
 // =============================================
-// VN100 Stock Scorer — App Logic (Connected to API)
+// VN30 Stock Scorer — App Logic (Connected to API)
 // =============================================
 
 const API_BASE = "/api";
@@ -11,6 +11,31 @@ let currentSort = { key: 'total_score', dir: -1 }; // -1 = desc
 let isRefreshing = false;
 let currentCategory = 'vn30'; // Mặc định là VN30
 let historyChart = null; // Biến lưu đồ thị
+
+function toNumber(value, fallback = 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizeScoreRow(row) {
+    const normalized = { ...row };
+    normalized.total_score = toNumber(normalized.total_score);
+    normalized.mcdx_score = toNumber(normalized.mcdx_score);
+    normalized.rrg_score = toNumber(
+        normalized.rrg_score,
+        normalized.total_score - normalized.mcdx_score
+    );
+    normalized.extra_score = toNumber(
+        normalized.extra_score,
+        Math.max(normalized.total_score - normalized.mcdx_score - normalized.rrg_score, 0)
+    );
+    normalized.score_max = Math.max(
+        toNumber(normalized.score_max, 2.0),
+        normalized.total_score,
+        0.01
+    );
+    return normalized;
+}
 
 // ---- Init ----
 document.addEventListener('DOMContentLoaded', () => {
@@ -100,13 +125,14 @@ function renderHistoryTable(data) {
     }
 
     tbody.innerHTML = data.slice().reverse().map(d => {
-        const rrgScore = (d.total_score - d.mcdx_score).toFixed(2);
+        const row = normalizeScoreRow(d);
+        const rrgScore = row.rrg_score.toFixed(2);
         return `<tr>
-            <td>${d.updated_date}</td>
-            <td style="color:var(--accent-blue); font-weight:600;">${d.mcdx_score.toFixed(2)}</td>
+            <td>${row.updated_date}</td>
+            <td style="color:var(--accent-blue); font-weight:600;">${row.mcdx_score.toFixed(2)}</td>
             <td style="color:var(--accent-green); font-weight:600;">${rrgScore}</td>
-            <td style="font-weight:800;">${d.total_score.toFixed(2)}</td>
-            <td>${d.rrg_quadrant}</td>
+            <td style="font-weight:800;">${row.total_score.toFixed(2)}</td>
+            <td>${row.rrg_quadrant}</td>
         </tr>`;
     }).join('');
 }
@@ -116,8 +142,9 @@ function renderHistoryChart(data, symbol) {
     
     const labels = data.map(d => d.updated_date.slice(5)); // Lấy MM-DD
     const mcdxScores = data.map(d => d.mcdx_score);
-    const rrgScores = data.map(d => d.total_score - d.mcdx_score);
+    const rrgScores = data.map(d => normalizeScoreRow(d).rrg_score);
     const totalScores = data.map(d => d.total_score);
+    const yMax = Math.max(2.1, ...data.map(d => normalizeScoreRow(d).score_max + 0.1));
 
     if (historyChart) {
         historyChart.destroy();
@@ -165,7 +192,7 @@ function renderHistoryChart(data, symbol) {
             scales: {
                 y: {
                     min: 0,
-                    max: 2.1,
+                    max: yMax,
                     ticks: { color: '#64748b' },
                     grid: { color: 'rgba(255,255,255,0.05)' }
                 },
@@ -205,7 +232,7 @@ async function fetchScores() {
 }
 
 function processData(data) {
-    allData = data || [];
+    allData = (data || []).map(normalizeScoreRow);
     filteredData = [...allData];
     
     updateStats();
@@ -377,11 +404,7 @@ function updateSortHeaders() {
 function filterTable() {
     const search = document.getElementById('searchInput').value.trim().toUpperCase();
     const quadrant = document.getElementById('filterQuadrant').value;
-    filteredData = allData.map(d => {
-        // Tính toán rrg_score ảo để sort nếu cần
-        d.rrg_score = parseFloat((d.total_score - d.mcdx_score).toFixed(2));
-        return d;
-    }).filter(d => {
+    filteredData = allData.filter(d => {
         const matchSearch = !search || d.symbol.includes(search);
         const matchQuadrant = !quadrant || d.rrg_quadrant === quadrant;
         return matchSearch && matchQuadrant;
@@ -400,9 +423,9 @@ function renderTable() {
     }
 
     tbody.innerHTML = filteredData.map((d, i) => {
-        const totalPct = (d.total_score / 2.0 * 100).toFixed(0);
+        const totalPct = Math.min(100, d.total_score / d.score_max * 100).toFixed(0);
         const totalClass = d.total_score >= 1.5 ? 'high' : d.total_score >= 0.8 ? 'mid' : 'low';
-        const rrgScore = (d.total_score - d.mcdx_score).toFixed(2);
+        const rrgScore = d.rrg_score.toFixed(2);
 
         const rrgClasses = {
             "TĂNG GIÁ": "rrg-leading",
@@ -426,8 +449,8 @@ function renderTable() {
             <td><span class="rrg-badge ${rrgClasses[d.rrg_quadrant] || ''}">${rrgDots[d.rrg_quadrant] || ''} ${d.rrg_quadrant}</span></td>
             <td><span class="banker-value ${(d.banker_left || 0) >= 16 ? 'hot' : (d.banker_left || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_left || 0).toFixed(1)}</span></td>
             <td><span class="banker-value ${(d.banker_right || 0) >= 16 ? 'hot' : (d.banker_right || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_right || 0).toFixed(1)}</span></td>
-            <td><span class="num-cell ${d.rs_ratio >= 100 ? 'above100' : 'below100'}">${d.rs_ratio.toFixed(2)}</span></td>
-            <td><span class="num-cell ${d.rs_mom >= 100 ? 'above100' : 'below100'}">${d.rs_mom.toFixed(2)}</span></td>
+            <td><span class="num-cell ${d.rs_ratio >= 0 ? 'above100' : 'below100'}">${d.rs_ratio.toFixed(2)}</span></td>
+            <td><span class="num-cell ${d.rs_mom >= 0 ? 'above100' : 'below100'}">${d.rs_mom.toFixed(2)}</span></td>
             <td><span class="tail-value ${d.tail_5d >= 4 ? 'active' : ''}">${d.tail_5d.toFixed(2)}</span></td>
         </tr>`;
     }).join('');
@@ -437,9 +460,9 @@ function renderTable() {
 
 // ---- Export CSV ----
 function exportCSV() {
-    const headers = ['STT','Mã CP','Tổng điểm','MCDX Score','Banker Left','Banker Right','Vùng RRG','RS-Ratio','RS-Mom','Tail 5D'];
+    const headers = ['STT','Mã CP','Tổng điểm','MCDX Score','RRG Score','Điểm thêm','Banker Left','Banker Right','Vùng RRG','RS-Ratio','RS-Mom','Tail 5D'];
     const rows = filteredData.map((d, i) =>
-        [i+1, d.symbol, d.total_score.toFixed(2), d.mcdx_score.toFixed(2), d.banker_left, d.banker_right, d.rrg_quadrant,
+        [i+1, d.symbol, d.total_score.toFixed(2), d.mcdx_score.toFixed(2), d.rrg_score.toFixed(2), d.extra_score.toFixed(2), d.banker_left, d.banker_right, d.rrg_quadrant,
          d.rs_ratio.toFixed(2), d.rs_mom.toFixed(2), d.tail_5d.toFixed(2)].join(',')
     );
     const csv = [headers.join(','), ...rows].join('\n');

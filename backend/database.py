@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import json
 from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'scores.db')
@@ -28,6 +29,17 @@ def init_db():
             PRIMARY KEY (symbol, category, updated_date)
         )
     ''')
+    cursor.execute("PRAGMA table_info(scores)")
+    columns = {row[1] for row in cursor.fetchall()}
+    migrations = {
+        "rrg_score": "ALTER TABLE scores ADD COLUMN rrg_score REAL DEFAULT 0",
+        "extra_score": "ALTER TABLE scores ADD COLUMN extra_score REAL DEFAULT 0",
+        "score_max": "ALTER TABLE scores ADD COLUMN score_max REAL DEFAULT 2",
+        "score_components": "ALTER TABLE scores ADD COLUMN score_components TEXT",
+    }
+    for column, statement in migrations.items():
+        if column not in columns:
+            cursor.execute(statement)
     conn.commit()
     conn.close()
 
@@ -37,16 +49,30 @@ def save_score(data, category='vn100'):
     now = datetime.now()
     updated_at = now.strftime('%Y-%m-%d %H:%M:%S')
     updated_date = now.strftime('%Y-%m-%d')
+    rrg_score = data.get('rrg_score', round(data['total_score'] - data['mcdx_score'], 4))
+    extra_score = data.get('extra_score', 0)
+    score_max = data.get('score_max', 2)
+    score_components = data.get('score_components')
+    if score_components is None:
+        score_components = {
+            'mcdx_score': data['mcdx_score'],
+            'rrg_score': rrg_score,
+        }
+    score_components_json = json.dumps(score_components, ensure_ascii=False)
     
     cursor.execute('''
         INSERT OR REPLACE INTO scores 
-        (symbol, category, total_score, mcdx_score, banker_value, banker_left, banker_right, rrg_quadrant, rs_ratio, rs_mom, tail_5d, updated_at, updated_date)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (symbol, category, total_score, mcdx_score, rrg_score, extra_score, score_max, score_components, banker_value, banker_left, banker_right, rrg_quadrant, rs_ratio, rs_mom, tail_5d, updated_at, updated_date)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         data['symbol'],
         category,
         data['total_score'],
         data['mcdx_score'],
+        rrg_score,
+        extra_score,
+        score_max,
+        score_components_json,
         data['banker_value'],
         data.get('banker_left', 0),
         data.get('banker_right', 0),
@@ -83,10 +109,18 @@ def get_latest_scores(category=None):
     cursor.execute(query)
     rows = cursor.fetchall()
     conn.close()
-    return [dict(row) for row in rows]
+    records = []
+    for row in rows:
+        record = dict(row)
+        if record.get('score_components'):
+            try:
+                record['score_components'] = json.loads(record['score_components'])
+            except (TypeError, json.JSONDecodeError):
+                pass
+        records.append(record)
+    return records
 
 def export_to_json(category=None):
-    import json
     scores = get_latest_scores(category)
     # Nếu có category thì lưu vào file riêng, không thì lưu vào data.json chung
     filename = f'data_{category}.json' if category else 'data.json'

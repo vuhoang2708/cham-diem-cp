@@ -32,8 +32,10 @@ except ImportError:
 
 try:
     from backend.create_apx import create_apx, OUTPUT_FILE
+    from backend.scoring import score_banker, score_rrg
 except ImportError:  # Allows running from the backend directory.
     from create_apx import create_apx, OUTPUT_FILE
+    from scoring import score_banker, score_rrg
 
 APX_PATH = r"C:\Users\Public\ag_bridge.apx"
 POLL_INTERVAL = 0.5   # seconds between output-file polls
@@ -148,25 +150,9 @@ def _build_result(parsed: dict) -> dict:
         "rs_mom":       rs_mom,
         "quadrant":     quadrant,
         "tail_5d":      tail_5d,
-        "mcdx_score":   _score_banker(banker),
-        "rrg_score":    _score_rrg(quadrant),
+        "mcdx_score":   score_banker(banker),
+        "rrg_score":    score_rrg(quadrant),
         "banker_left":  banker,
         "banker_right": hotmoney,
         "banker_value": banker,
     }
-
-
-def _score_banker(value: float) -> float:
-    breakpoints = [(0, 0.0), (3, 0.2), (8, 0.4), (12, 0.6), (16, 0.8), (20, 1.0)]
-    if value <= 0:  return 0.0
-    if value >= 20: return 1.0
-    for i in range(len(breakpoints) - 1):
-        x0, y0 = breakpoints[i]
-        x1, y1 = breakpoints[i + 1]
-        if x0 <= value <= x1:
-            return round(y0 + (y1 - y0) * (value - x0) / (x1 - x0), 4)
-    return 0.0
-
-
-def _score_rrg(quadrant: int) -> float:
-    return {1: 1.0, 4: 0.75, 2: 0.5, 3: 0.25}.get(quadrant, 0.0)

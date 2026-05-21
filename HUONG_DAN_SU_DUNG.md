@@ -1,44 +1,93 @@
-# 📖 Hướng dẫn Sử dụng VN100 Stock Scorer (AmiBroker Version)
+# Hướng dẫn sử dụng dashboard VN30 AmiBroker
 
-Hệ thống chấm điểm cổ phiếu tự động dựa trên **MCDX (Dòng tiền nhà cái)** và **RRG (Chu kỳ sức mạnh giá)** từ **AmiBroker**.
+Mục tiêu hiện tại: chấm điểm **các cổ phiếu trong rổ VN30**, không tính giá trị chỉ số VN30.
 
----
+## Vận hành hàng ngày
 
-## 🚀 3 Bước Vận hành Hàng ngày
+### 1. Mở AmiBroker
 
-### Bước 1: Khởi động AmiBroker
-- Mở ứng dụng **AmiBroker** (phải đang chạy để hệ thống lấy dữ liệu).
-- Đảm bảo dữ liệu VN100 đã được load (File → Open → chọn database).
+- Mở AmiBroker trước khi chạy backend.
+- Đảm bảo database đang dùng có đủ mã VN30 và benchmark `VNINDEX`.
+- Đảm bảo FireAnt plugin hoạt động trong AmiBroker: `FA_MCDX`, `FA_RRG`.
 
-### Bước 2: Khởi động Dashboard
-- Mở Terminal/PowerShell tại thư mục gốc dự án.
-- Chạy lệnh:
-  ```bash
-  $env:DATA_SOURCE="amibroker"
-  .\venv\Scripts\python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
-  ```
-- Mở trình duyệt: `http://localhost:8000`
+### 2. Chạy dashboard local
 
-### Bước 3: Chấm điểm & Cập nhật
-- Tại Dashboard, nhấn nút **"Cập nhật ngay"** cho danh mục mong muốn (VN30, VN100, Custom).
-- Hệ thống sẽ lấy dữ liệu từ AmiBroker (~2 phút cho VN100).
-- Kết quả hiển thị tự động sau khi hoàn thành.
+Từ thư mục gốc dự án:
 
----
+```powershell
+cd backend
+$env:DATA_SOURCE="amibroker"
+$env:AMIBROKER_TIMEOUT="360"
+..\venv\Scripts\python -m uvicorn main:app --host 127.0.0.1 --port 8000
+```
 
-## 🛠 Giải quyết sự cố thường gặp
+Mở:
 
-1. **Lỗi "Cannot connect to AmiBroker"?**
-   - Kiểm tra AmiBroker đã mở chưa.
-   - Kiểm tra file `ami_bridge.afl` tồn tại tại `C:\Program Files (x86)\AmiBroker\Formulas\Custom\`.
+```text
+http://127.0.0.1:8000/
+```
 
-2. **Điểm MCDX bằng 0?**
-   - Kiểm tra FireAnt indicators đã cài trong AmiBroker (FA_MCDX, FA_RRG).
-   - Mở AmiBroker Editor, chạy `ami_bridge.afl` thủ công để xem lỗi.
+### 3. Cập nhật điểm
 
-3. **Muốn dừng giữa chừng?**
-   - Nhấn Ctrl+C trong Terminal để dừng server.
+- Trong dashboard local, chọn tab VN30.
+- Bấm **Cập nhật ngay**.
+- Backend sẽ chạy `run_amibroker_vn30.py`, ghi 30 file output từ AmiBroker, lưu SQLite và export JSON.
+- Trên Vercel, dashboard đọc `frontend/data_vn30.json` đã push lên GitHub.
 
----
+Chạy tay nếu không muốn dùng nút dashboard:
 
-*Chúc bạn săn được những siêu cổ phiếu với dòng tiền cá mập mạnh nhất!* 📈
+```powershell
+.\venv\Scripts\python backend\run_amibroker_vn30.py --timeout 360
+```
+
+## Link public
+
+```text
+https://cham-diem-cp.vercel.app
+```
+
+## File chứng cứ runtime
+
+Khi batch chạy thành công, mỗi mã VN30 có một file:
+
+```text
+C:\Users\Public\ag_vn30_bridge\ami_vn30_<SYMBOL>.txt
+```
+
+Ví dụ nội dung:
+
+```text
+symbol=VCB;banker=5.891842;hotmoney=17.589798;rs_ratio=-1.213547;rs_mom=0.990822;quadrant=4;tail_5d=1.798761;ready=1
+```
+
+## Cách hiểu điểm
+
+- `mcdx_score`: điểm dòng tiền Banker, tối đa 1.0.
+- `rrg_score`: điểm vùng RRG, tối đa 1.0.
+- `extra_score`: điểm cộng thêm cho các chỉ báo mới, hiện mặc định 0.
+- `total_score = mcdx_score + rrg_score + extra_score`.
+
+## Lỗi thường gặp
+
+### AmiBroker không chạy hoặc COM không kết nối
+
+Mở AmiBroker trước, rồi chạy lại backend hoặc batch script.
+
+### Dashboard không tự refresh
+
+Kiểm tra backend local ở:
+
+```text
+http://127.0.0.1:8000/api/scores?category=vn30
+```
+
+Nếu chỉ mở Vercel thì nút refresh bị ẩn hoặc không chạy backend local. Muốn cập nhật Vercel thì chạy batch local, commit/push `frontend/data_vn30.json`.
+
+### AmiBroker báo lỗi không mở formula
+
+Bridge mới đã tránh lỗi `FormulaPath` rỗng. File runtime cần tồn tại ở:
+
+```text
+D:\MetakitData\AmibrokerFA\EOD\Formulas\Imported\ag_vn30_bridge.afl
+C:\Users\Public\ag_vn30_bridge.apx
+```

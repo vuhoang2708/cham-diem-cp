@@ -4,6 +4,7 @@ import os
 from data_source import get_stock_data
 from calculator_rrg import calculate_rrg
 from database import init_db, save_score
+from scoring import build_score_payload
 
 USE_AMIBROKER = os.environ.get("DATA_SOURCE", "fireant").lower() == "amibroker"
 
@@ -89,13 +90,15 @@ async def run_scoring(category='vn30', symbols=None):
             mcdx_res = await scraper.get_banker_value(symbol)
         
         if rrg_res and mcdx_res:
-            # 3. Combine and Score
-            total_score = round(rrg_res['rrg_score'] + mcdx_res['mcdx_score'], 2)
+            # 3. Combine score components
+            score_payload = build_score_payload(
+                mcdx_score=mcdx_res['mcdx_score'],
+                rrg_score=rrg_res['rrg_score'],
+            )
             
             data = {
                 'symbol': symbol,
-                'total_score': total_score,
-                'mcdx_score': mcdx_res['mcdx_score'],
+                **score_payload,
                 'banker_value': mcdx_res['banker_value'],
                 'banker_left': mcdx_res.get('banker_left', 0),
                 'banker_right': mcdx_res.get('banker_right', 0),
@@ -108,7 +111,7 @@ async def run_scoring(category='vn30', symbols=None):
             # 4. Save to Database với category
             save_score(data, category=category)
             results_count += 1
-            print(f"   Success: Total Score = {total_score}")
+            print(f"   Success: Total Score = {data['total_score']}")
         else:
             print(f"   Failed to process {symbol}")
             

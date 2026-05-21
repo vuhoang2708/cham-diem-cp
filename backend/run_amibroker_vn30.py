@@ -15,6 +15,7 @@ except ImportError:  # pragma: no cover - Windows runtime dependency
     win32com = None
 
 from database import export_to_json, init_db, save_score
+from scoring import build_base_score_from_raw, quadrant_name
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace", line_buffering=True)
@@ -36,33 +37,6 @@ OUTPUT_PREFIX = "ami_vn30_"
 
 def log(message: str) -> None:
     print(message, flush=True)
-
-
-def score_banker(value: float) -> float:
-    breakpoints = [(0, 0.0), (3, 0.2), (8, 0.4), (12, 0.6), (16, 0.8), (20, 1.0)]
-    if value <= 0:
-        return 0.0
-    if value >= 20:
-        return 1.0
-    for i in range(len(breakpoints) - 1):
-        x0, y0 = breakpoints[i]
-        x1, y1 = breakpoints[i + 1]
-        if x0 <= value <= x1:
-            return round(y0 + (y1 - y0) * (value - x0) / (x1 - x0), 4)
-    return 0.0
-
-
-def quadrant_name(value: int) -> str:
-    return {
-        1: "TĂNG GIÁ",
-        2: "SUY YẾU",
-        3: "GIẢM GIÁ",
-        4: "TÍCH LŨY",
-    }.get(value, "GIẢM GIÁ")
-
-
-def score_rrg(value: int) -> float:
-    return {1: 1.0, 4: 0.75, 2: 0.5, 3: 0.25}.get(value, 0.25)
 
 
 def read_symbols() -> list[str]:
@@ -288,12 +262,10 @@ def load_result(symbol: str) -> dict | None:
     tail_5d = parse_float(raw.get("tail_5d"))
     quadrant_num = parse_int(raw.get("quadrant"))
 
-    mcdx_score = score_banker(banker)
-    rrg_score = score_rrg(quadrant_num)
+    score_payload = build_base_score_from_raw(banker, quadrant_num)
     return {
         "symbol": symbol,
-        "total_score": round(mcdx_score + rrg_score, 2),
-        "mcdx_score": mcdx_score,
+        **score_payload,
         "banker_value": banker,
         "banker_left": banker,
         "banker_right": hotmoney,

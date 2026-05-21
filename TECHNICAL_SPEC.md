@@ -1,49 +1,128 @@
-# TECHNICAL SPECIFICATION: Hệ thống Chấm điểm Cổ phiếu VN100 (V2.0)
+# Technical Specification: VN30 AmiBroker Scoring Dashboard
 
-## 1. Tổng quan Kiến trúc
-Hệ thống được thiết kế theo mô hình Client-Server cục bộ, hỗ trợ quản lý đa danh mục (VN30, VN100, Custom) và theo dõi dữ liệu lịch sử.
+## 1. Baseline
 
-## 2. Hạ tầng Dữ liệu (Database)
-- **Công nghệ**: SQLite.
-- **Schema bảng `scores`**:
-    - `symbol` (TEXT): Mã cổ phiếu.
-    - `category` (TEXT): Nhóm (vn30, vn100, custom).
-    - `updated_date` (DATE): Ngày cập nhật (YYYY-MM-DD).
-    - `total_score` (REAL): Điểm tổng hợp.
-    - `mcdx_score` (REAL): Điểm từ chỉ báo MCDX (0 - 1.0).
-    - `banker_left` (REAL): Giá trị Banker bên trái ký hiệu ∅.
-    - `banker_right` (REAL): Giá trị Banker bên phải ký hiệu ∅ (Backup).
-    - `rrg_quadrant` (TEXT): Vùng dòng tiền (Tăng giá, Tích lũy, Suy yếu, Giảm giá).
-    - `rs_ratio` / `rs_mom` (REAL): Chỉ số RRG.
-    - `tail_5d` (REAL): Độ dài đuôi 5 ngày.
-- **Primary Key**: `(symbol, category, updated_date)` - Cho phép lưu trữ lịch sử biến động mỗi ngày của mỗi mã.
+Hệ thống hiện lấy dữ liệu từ AmiBroker để chấm điểm tập hợp cổ phiếu trong rổ VN30.
 
-## 3. Backend (FastAPI)
-- **Serving Static**: FastAPI phục vụ trực tiếp thư mục `frontend/` tại cổng 8000.
-- **API Endpoints**:
-    - `GET /api/scores?category=...`: Lấy bảng điểm mới nhất của một nhóm.
-    - `GET /api/history?symbol=...`: Lấy dữ liệu 10 ngày gần nhất của một mã CP.
-    - `POST /api/refresh?category=...`: Kích hoạt tiến trình quét dữ liệu ngầm.
-    - `POST /api/import`: Lưu danh sách mã CP tùy chỉnh của người dùng.
+- Data source chính: AmiBroker COM automation.
+- AFL functions: `FA_MCDX`, `FA_RRG`.
+- Backend: FastAPI, SQLite.
+- Frontend: HTML/CSS/JS tĩnh, dùng API local hoặc fallback JSON.
+- Public deployment: Vercel đọc `frontend/data_vn30.json`.
 
-## 4. Frontend & Visualization
-- **Layout**: Split-screen (Chia đôi màn hình) cho Tab Lịch sử.
-- **Thư viện đồ thị**: Chart.js.
-- **Đồ thị Lịch sử (10 ngày)**:
-    - Trục X: Ngày (MM-DD).
-    - Trục Y: Điểm số (0 - 2.1).
-    - 3 Đường biểu diễn: Tổng điểm (Vàng), MCDX (Xanh dương), RRG (Xanh lá).
-- **Responsive**: Sử dụng Flexbox để đảm bảo bảng và biểu đồ tự động co giãn theo kích thước cửa sổ.
+## 2. Data Flow
 
-## 5. Quy trình Quét dữ liệu (Scoring Logic)
-1.  **RRG Calculation**: Lấy dữ liệu từ AmiBroker qua OLE COM, tính RS-Ratio và RS-Momentum.
-2.  **MCDX Scraping**:
-    - Kết nối AmiBroker COM.
-    - Chạy file AFL `ami_bridge.afl` để tính MCDX Banker.
-    - Đọc giá trị từ StaticVar.
-3.  **Final Scoring**: `Total = RRG_Score (0-1) + MCDX_Score (0-1)`.
+1. `backend/run_amibroker_vn30.py` đọc danh sách mã từ `data/vn30_symbols.json`.
+2. Script ghi AFL runtime vào AmiBroker Formulas folder.
+3. Script ghi APX runtime vào `C:\Users\Public\ag_vn30_bridge.apx`.
+4. `AnalysisDoc.Run(1)` chạy Exploration.
+5. AFL chỉ ghi file cho symbol nằm trong VN30.
+6. Python đợi đủ `ready=1` cho 30 output files.
+7. Python parse key-value output, tính điểm, lưu SQLite.
+8. `database.export_to_json("vn30")` ghi `frontend/data_vn30.json`.
 
-### Prerequisites:
-- AmiBroker 6.0+ (bản Crack hoạt động)
-- FireAnt indicators cài trong AmiBroker
-- pywin32 cài trong Python environment
+## 3. Database
+
+SQLite file:
+
+```text
+data/scores.db
+```
+
+Table `scores`, primary key:
+
+```text
+(symbol, category, updated_date)
+```
+
+Các cột chính:
+
+| Column | Meaning |
+|---|---|
+| `symbol` | Mã cổ phiếu |
+| `category` | `vn30`, `vn100`, `custom` |
+| `total_score` | Tổng điểm đã cộng các component |
+| `mcdx_score` | Điểm MCDX Banker |
+| `rrg_score` | Điểm RRG quadrant |
+| `extra_score` | Tổng điểm từ các component mở rộng |
+| `score_max` | Điểm tối đa lý thuyết của bộ component hiện tại |
+| `score_components` | JSON chi tiết từng component score |
+| `banker_value`, `banker_left`, `banker_right` | Giá trị MCDX |
+| `rrg_quadrant`, `rs_ratio`, `rs_mom`, `tail_5d` | Dữ liệu RRG |
+| `updated_at`, `updated_date` | Timestamp lưu kết quả |
+
+`init_db()` có migration nhẹ để thêm các cột scoring mở rộng nếu database cũ chưa có.
+
+## 4. Scoring Engine
+
+File trung tâm:
+
+```text
+backend/scoring.py
+```
+
+Baseline:
+
+```text
+total_score = mcdx_score + rrg_score + extra_score
+```
+
+Hiện tại:
+
+- `mcdx_score`: 0.00 - 1.00.
+- `rrg_score`: 0.25 - 1.00.
+- `extra_score`: 0.00.
+- `score_max`: 2.00.
+
+MCDX Banker dùng breakpoints:
+
+```text
+0 -> 0.0
+3 -> 0.2
+8 -> 0.4
+12 -> 0.6
+16 -> 0.8
+20 -> 1.0
+```
+
+RRG dùng output native của `FA_RRG`, trục chia tại `0`, không phải `100`.
+
+| Quadrant | Condition | Score |
+|---|---|---|
+| TĂNG GIÁ | `rs_ratio >= 0` and `rs_mom >= 0` | 1.00 |
+| TÍCH LŨY | `rs_ratio < 0` and `rs_mom >= 0` | 0.75 |
+| SUY YẾU | `rs_ratio >= 0` and `rs_mom < 0` | 0.50 |
+| GIẢM GIÁ | `rs_ratio < 0` and `rs_mom < 0` | 0.25 |
+
+## 5. Adding New Indicators
+
+Khi thêm chỉ báo mới:
+
+1. Bổ sung giá trị raw vào AFL output hoặc Python connector.
+2. Thêm hàm scoring trong `backend/scoring.py`.
+3. Gọi `build_score_payload(extra_components={"new_indicator": score})`.
+4. Nếu cần hiển thị raw value, thêm cột DB hoặc JSON field riêng.
+5. Frontend không được tính RRG bằng `total_score - mcdx_score`; hiện đã dùng `rrg_score` riêng để tránh sai khi có component mới.
+
+## 6. API
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/scores?category=vn30` | Lấy bảng điểm mới nhất |
+| `GET /api/history?symbol=VCB` | Lấy lịch sử theo mã |
+| `POST /api/refresh?category=vn30` | Chạy refresh local |
+| `POST /api/import` | Lưu danh sách custom |
+
+Với `DATA_SOURCE=amibroker` và `category=vn30`, refresh gọi trực tiếp `run_vn30_scoring()`.
+
+## 7. Runtime Requirements
+
+- Windows.
+- AmiBroker đang mở.
+- FireAnt plugin đã cài và chạy được `FA_MCDX`, `FA_RRG`.
+- Python venv có `fastapi`, `uvicorn`, `pywin32`.
+- AmiBroker formulas directory hiện dùng:
+
+```text
+D:\MetakitData\AmibrokerFA\EOD\Formulas
+```
