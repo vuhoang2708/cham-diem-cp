@@ -71,6 +71,13 @@ total_score = mcdx_score + rrg_score + adx_score
 score_max = 2.5
 ```
 
+### Tính năng Dynamic Scoring (Giao diện)
+
+Người dùng có thể chủ động bật/tắt từng tiêu chí chấm điểm trực tiếp trên thanh Header của Dashboard.
+- **Tính toán thời gian thực:** Khi một tiêu chí bị bỏ chọn (untick), điểm của tiêu chí đó lập tức bị loại khỏi `total_score`.
+- **Trần điểm động (Dynamic Max):** Tổng điểm tối đa (`score_max`) sẽ tự động thu hẹp lại tương ứng dựa trên dữ liệu chuẩn từ Backend API.
+- **Đồng bộ toàn diện:** Bảng xếp hạng, Thanh tiến trình (Progress Bar), và Đồ thị biến động Lịch sử (History Chart) sẽ lập tức phản hồi và vẽ lại ngay tức thì mà không cần tải lại trang.
+
 ## Chuẩn bị mở rộng chỉ báo
 
 Khi cần cộng thêm chỉ báo mới vào điểm:
