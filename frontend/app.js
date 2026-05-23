@@ -11,6 +11,70 @@ let currentSort = { key: 'total_score', dir: -1 }; // -1 = desc
 let isRefreshing = false;
 let currentCategory = 'vn30'; // Mặc định là VN30
 let historyChart = null; // Biến lưu đồ thị
+let dynamicOptions = { mcdx: true, rrg: true, adx: true };
+
+window.updateDynamicScoring = function(event) {
+    const chkMCDX = document.getElementById('chkMCDX');
+    const chkRRG = document.getElementById('chkRRG');
+    const chkADX = document.getElementById('chkADX');
+    
+    // Prevent unticking all
+    if (!chkMCDX.checked && !chkRRG.checked && !chkADX.checked) {
+        alert("Phải chọn ít nhất 1 tiêu chí để tính tổng điểm!");
+        if (event && event.target) event.target.checked = true;
+        return;
+    }
+    
+    dynamicOptions.mcdx = chkMCDX.checked;
+    dynamicOptions.rrg = chkRRG.checked;
+    dynamicOptions.adx = chkADX.checked;
+    
+    document.getElementById('lblMCDX').classList.toggle('unticked', !chkMCDX.checked);
+    document.getElementById('lblRRG').classList.toggle('unticked', !chkRRG.checked);
+    document.getElementById('lblADX').classList.toggle('unticked', !chkADX.checked);
+    
+    applyDynamicScoring();
+};
+
+function applyDynamicScoring() {
+    allData.forEach(d => {
+        if (d._orig_mcdx === undefined) {
+            d._orig_mcdx = d.mcdx_score || 0;
+            d._orig_rrg = d.rrg_score || 0;
+            d._orig_adx = d.adx_score || 0;
+            d._orig_max = d.score_max || 2.5;
+            d._orig_total = d.total_score || 0;
+        }
+        
+        let dynamicTotal = 0;
+        let dynamicMax = 0;
+        
+        if (dynamicOptions.mcdx) {
+            dynamicTotal += d._orig_mcdx;
+            dynamicMax += 1.0;
+        }
+        if (dynamicOptions.rrg) {
+            dynamicTotal += d._orig_rrg;
+            dynamicMax += 1.0;
+        }
+        if (dynamicOptions.adx) {
+            dynamicTotal += d._orig_adx;
+            let adxMax = Math.max(d._orig_max - 2.0, 0);
+            if (adxMax <= 0) adxMax = 0.5;
+            dynamicMax += adxMax;
+        }
+        
+        d.total_score = dynamicTotal;
+        d.score_max = Math.max(dynamicMax, 0.01);
+    });
+    
+    filterTable();
+    updateStats();
+    
+    if (currentCategory === 'history') {
+        loadHistory();
+    }
+}
 
 function toNumber(value, fallback = 0) {
     const parsed = Number(value);
@@ -130,12 +194,22 @@ function renderHistoryTable(data) {
 
     tbody.innerHTML = data.slice().reverse().map(d => {
         const row = normalizeScoreRow(d);
+        
+        // Tính toán dynamic total cho history
+        let dynamicTotal = 0;
+        let adxMax = Math.max((row.score_max || 2.5) - 2.0, 0);
+        if (adxMax <= 0) adxMax = 0.5;
+        
+        if (dynamicOptions.mcdx) dynamicTotal += row.mcdx_score || 0;
+        if (dynamicOptions.rrg) dynamicTotal += row.rrg_score || 0;
+        if (dynamicOptions.adx) dynamicTotal += row.adx_score || 0;
+        
         const rrgScore = row.rrg_score.toFixed(2);
         return `<tr>
             <td>${row.updated_date}</td>
             <td style="color:var(--accent-blue); font-weight:600;">${row.mcdx_score.toFixed(2)}</td>
             <td style="color:var(--accent-green); font-weight:600;">${rrgScore}</td>
-            <td style="font-weight:800;">${row.total_score.toFixed(2)}</td>
+            <td style="font-weight:800;">${dynamicTotal.toFixed(2)}</td>
             <td>${row.rrg_quadrant}</td>
         </tr>`;
     }).join('');
@@ -148,8 +222,26 @@ function renderHistoryChart(data, symbol) {
     const mcdxScores = data.map(d => d.mcdx_score);
     const rrgScores = data.map(d => normalizeScoreRow(d).rrg_score);
     const adxScores = data.map(d => normalizeScoreRow(d).adx_score);
-    const totalScores = data.map(d => d.total_score);
-    const yMax = Math.max(2.1, ...data.map(d => normalizeScoreRow(d).score_max + 0.1));
+    
+    const totalScores = data.map(d => {
+        const row = normalizeScoreRow(d);
+        let dynTotal = 0;
+        if (dynamicOptions.mcdx) dynTotal += row.mcdx_score || 0;
+        if (dynamicOptions.rrg) dynTotal += row.rrg_score || 0;
+        if (dynamicOptions.adx) dynTotal += row.adx_score || 0;
+        return dynTotal;
+    });
+    
+    let dynMax = 0;
+    if (data.length > 0) {
+        const row = normalizeScoreRow(data[0]);
+        let adxMax = Math.max((row.score_max || 2.5) - 2.0, 0);
+        if (adxMax <= 0) adxMax = 0.5;
+        if (dynamicOptions.mcdx) dynMax += 1.0;
+        if (dynamicOptions.rrg) dynMax += 1.0;
+        if (dynamicOptions.adx) dynMax += adxMax;
+    }
+    const yMax = Math.max(1.1, dynMax + 0.1);
 
     if (historyChart) {
         historyChart.destroy();
@@ -246,10 +338,9 @@ async function fetchScores() {
 
 function processData(data) {
     allData = (data || []).map(normalizeScoreRow);
-    filteredData = [...allData];
     
-    updateStats();
-    sortAndRender();
+    // Áp dụng dynamic scoring (sẽ tự động gọi filterTable và updateStats)
+    applyDynamicScoring();
     
     if (allData.length > 0 && allData[0].updated_at) {
         const lastUpdate = new Date(allData[0].updated_at);

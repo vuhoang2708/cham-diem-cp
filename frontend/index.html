@@ -34,10 +34,12 @@
       </div>
 
       <div class="header-center">
-        <div class="criteria-pills">
-          <span class="pill pill-blue">MCDX Banker</span>
+        <div class="criteria-pills" id="scoringToggles">
+          <label class="pill pill-blue" id="lblMCDX"><input type="checkbox" id="chkMCDX" checked onchange="updateDynamicScoring(event)"> MCDX Banker</label>
           <span class="pill-divider">+</span>
-          <span class="pill pill-purple">RRG Quadrant</span>
+          <label class="pill pill-purple" id="lblRRG"><input type="checkbox" id="chkRRG" checked onchange="updateDynamicScoring(event)"> RRG Quadrant</label>
+          <span class="pill-divider">+</span>
+          <label class="pill pill-orange" id="lblADX"><input type="checkbox" id="chkADX" checked onchange="updateDynamicScoring(event)"> ADX Trend</label>
           <span class="pill-divider">=</span>
           <span class="pill pill-gold">Tổng điểm</span>
         </div>
