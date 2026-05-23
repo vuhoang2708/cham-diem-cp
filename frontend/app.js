@@ -32,8 +32,40 @@ window.updateDynamicScoring = function(event) {
     document.getElementById('lblMCDX').classList.toggle('unticked', !chkMCDX.checked);
     document.getElementById('lblRRG').classList.toggle('unticked', !chkRRG.checked);
     document.getElementById('lblADX').classList.toggle('unticked', !chkADX.checked);
+
+    // Đồng bộ trạng thái checkbox ở Table Header
+    const chkTableMCDX = document.getElementById('chkTableMCDX');
+    const chkTableRRG = document.getElementById('chkTableRRG');
+    const chkTableADX = document.getElementById('chkTableADX');
+    
+    if (chkTableMCDX) chkTableMCDX.checked = chkMCDX.checked;
+    if (chkTableRRG) chkTableRRG.checked = chkRRG.checked;
+    if (chkTableADX) chkTableADX.checked = chkADX.checked;
+
+    // Toggle class dimmed-col cho các Header
+    const thMCDX = document.getElementById('thMCDX');
+    const thRRG = document.getElementById('thRRG');
+    const thADX = document.getElementById('thADX');
+
+    if (thMCDX) thMCDX.classList.toggle('dimmed-col', !chkMCDX.checked);
+    if (thRRG) thRRG.classList.toggle('dimmed-col', !chkRRG.checked);
+    if (thADX) thADX.classList.toggle('dimmed-col', !chkADX.checked);
     
     applyDynamicScoring();
+};
+
+window.toggleCriteriaTable = function(type, event) {
+    const isChecked = event.target.checked;
+    let targetFormulaCheckbox;
+    if (type === 'mcdx') targetFormulaCheckbox = document.getElementById('chkMCDX');
+    else if (type === 'rrg') targetFormulaCheckbox = document.getElementById('chkRRG');
+    else if (type === 'adx') targetFormulaCheckbox = document.getElementById('chkADX');
+    
+    if (targetFormulaCheckbox) {
+        targetFormulaCheckbox.checked = isChecked;
+        window.updateDynamicScoring({ target: targetFormulaCheckbox });
+        event.target.checked = targetFormulaCheckbox.checked;
+    }
 };
 
 function applyDynamicScoring() {
@@ -550,9 +582,9 @@ function renderTable() {
                     <span class="score-val ${totalClass}">${d.total_score.toFixed(2)}</span>
                 </div>
             </td>
-            <td><span class="score-val ${d.mcdx_score >= 0.8 ? 'high' : d.mcdx_score >= 0.4 ? 'mid' : 'low'}">${(d.mcdx_score || 0).toFixed(2)}</span></td>
-            <td><span class="score-val ${rrgScore >= 0.8 ? 'high' : rrgScore >= 0.4 ? 'mid' : 'low'}">${rrgScore}</span></td>
-            <td><span class="score-val ${adxClass}">${d.adx_score.toFixed(2)}</span></td>
+            <td class="${!dynamicOptions.mcdx ? 'dimmed-col' : ''}"><span class="score-val ${d.mcdx_score >= 0.8 ? 'high' : d.mcdx_score >= 0.4 ? 'mid' : 'low'}">${(d.mcdx_score || 0).toFixed(2)}</span></td>
+            <td class="${!dynamicOptions.rrg ? 'dimmed-col' : ''}"><span class="score-val ${rrgScore >= 0.8 ? 'high' : rrgScore >= 0.4 ? 'mid' : 'low'}">${rrgScore}</span></td>
+            <td class="${!dynamicOptions.adx ? 'dimmed-col' : ''}"><span class="score-val ${adxClass}">${d.adx_score.toFixed(2)}</span></td>
             <td><span class="rrg-badge ${rrgClasses[d.rrg_quadrant] || ''}">${rrgDots[d.rrg_quadrant] || ''} ${d.rrg_quadrant}</span></td>
             <td><span class="banker-value ${(d.banker_left || 0) >= 16 ? 'hot' : (d.banker_left || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_left || 0).toFixed(1)}</span></td>
             <td><span class="banker-value ${(d.banker_right || 0) >= 16 ? 'hot' : (d.banker_right || 0) >= 8 ? 'warm' : 'cold'}">${(d.banker_right || 0).toFixed(1)}</span></td>

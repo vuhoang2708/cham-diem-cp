@@ -225,14 +225,14 @@
             <th class="col-total sortable active-sort" onclick="sortTable('total_score')">
               Tổng điểm <span class="sort-icon">↓</span>
             </th>
-            <th class="col-score sortable" onclick="sortTable('mcdx_score')">
-              MCDX Score <span class="sort-icon">↕</span>
+            <th class="col-score sortable" id="thMCDX" onclick="sortTable('mcdx_score')">
+              <input type="checkbox" id="chkTableMCDX" checked onclick="event.stopPropagation(); toggleCriteriaTable('mcdx', event)"> MCDX Score <span class="sort-icon">↕</span>
             </th>
-            <th class="col-score sortable" onclick="sortTable('rrg_score')">
-              RRG Score <span class="sort-icon">↕</span>
+            <th class="col-score sortable" id="thRRG" onclick="sortTable('rrg_score')">
+              <input type="checkbox" id="chkTableRRG" checked onclick="event.stopPropagation(); toggleCriteriaTable('rrg', event)"> RRG Score <span class="sort-icon">↕</span>
             </th>
-            <th class="col-score sortable" onclick="sortTable('adx_score')">
-              ADX Score <span class="sort-icon">↕</span>
+            <th class="col-score sortable" id="thADX" onclick="sortTable('adx_score')">
+              <input type="checkbox" id="chkTableADX" checked onclick="event.stopPropagation(); toggleCriteriaTable('adx', event)"> ADX Score <span class="sort-icon">↕</span>
             </th>
             <th class="col-rrg">Vùng RRG</th>
             <th class="col-value sortable" onclick="sortTable('banker_left')">
