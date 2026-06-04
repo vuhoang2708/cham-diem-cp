@@ -1,7 +1,7 @@
 # Đề xuất kỹ thuật: Tích hợp ADX Score
 
 **Ngày:** 2026-05-21  
-**Trạng thái:** Đã implement công thức V1
+**Trạng thái:** Đã implement công thức V1, đã đưa vào dynamic scoring UI
 
 ---
 
@@ -239,7 +239,7 @@ Parse 5 field mới từ output file, truyền vào `build_score_payload(extra_c
 Thêm cột raw: `adx_value`, `di_plus`, `di_minus`, `adx_1d`, `adx_3d` (optional, cho audit).
 
 ### frontend/app.js
-Tùy chọn: hiển thị `adx_score` thành cột riêng trong bảng.
+Đã hiển thị `adx_score` thành cột riêng trong bảng. ADX cũng đã được đưa vào checkbox dynamic scoring trên header và table header.
 
 ---
 

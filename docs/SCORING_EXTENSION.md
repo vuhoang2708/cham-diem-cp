@@ -45,6 +45,7 @@ payload = build_score_payload(
 
 5. Lưu raw value riêng nếu cần audit.
 6. Chạy lại batch và kiểm tra `score_components` trong `frontend/data_vn30.json`.
+7. Nếu component mới cần bật/tắt trên dashboard, cập nhật dynamic scoring UI.
 
 ## Chỗ cần sửa thường gặp
 
@@ -52,3 +53,15 @@ payload = build_score_payload(
 - `backend/scoring.py`: thêm hàm tính điểm.
 - `backend/database.py`: chỉ cần thêm cột nếu muốn lưu raw value mới.
 - `frontend/app.js`: chỉ cần sửa nếu muốn hiển thị component mới thành cột riêng.
+- `frontend/index.html`: thêm checkbox header/table header nếu muốn bật/tắt component.
+- `frontend/style.css`: thêm style cho trạng thái dimmed/unticked nếu component có cột riêng.
+
+## Checklist UI khi thêm component mới
+
+1. Thêm option vào `dynamicOptions`.
+2. Thêm checkbox trên header.
+3. Thêm checkbox tương ứng trong table header nếu component có cột riêng.
+4. Sync checkbox trong `updateDynamicScoring()`.
+5. Cập nhật `applyDynamicScoring()` để cộng/trừ component và max score.
+6. Cập nhật `sortTable`/`keyIdx` nếu component có thể sort.
+7. Cập nhật history chart nếu component cần hiển thị trong lịch sử.

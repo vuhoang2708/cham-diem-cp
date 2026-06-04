@@ -19,6 +19,16 @@ Baseline hiện tại sau retest ngày 2026-05-20:
 6. Python parse output, lưu SQLite, export `frontend/data_vn30.json`.
 7. Frontend đọc API local hoặc fallback sang JSON tĩnh trên Vercel.
 
+## Tính năng UI hiện tại
+
+- Bảng xếp hạng VN30 theo `total_score`.
+- Có tab VN30, VN100, Custom và History, nhưng baseline dữ liệu thật hiện là VN30.
+- Có checkbox bật/tắt từng tiêu chí `MCDX`, `RRG`, `ADX` ngay trên header.
+- Có checkbox đồng bộ trong table header ở các cột `MCDX Score`, `RRG Score`, `ADX Score`.
+- Khi bỏ chọn một tiêu chí, frontend recalculates `total_score` và `score_max` ngay tại chỗ, không ghi ngược vào database.
+- Không cho tắt cả 3 tiêu chí cùng lúc.
+- Ranking, score bar, table, history chart phản hồi theo bộ tiêu chí đang bật.
+
 ## Cách chạy local
 
 Mở AmiBroker trước, đảm bảo database EOD và FireAnt plugin đã sẵn sàng.
@@ -73,10 +83,11 @@ score_max = 2.5
 
 ### Tính năng Dynamic Scoring (Giao diện)
 
-Người dùng có thể chủ động bật/tắt từng tiêu chí chấm điểm trực tiếp trên thanh Header của Dashboard.
+Người dùng có thể chủ động bật/tắt từng tiêu chí chấm điểm trực tiếp trên thanh Header của Dashboard hoặc ngay tại table header.
 - **Tính toán thời gian thực:** Khi một tiêu chí bị bỏ chọn (untick), điểm của tiêu chí đó lập tức bị loại khỏi `total_score`.
 - **Trần điểm động (Dynamic Max):** Tổng điểm tối đa (`score_max`) sẽ tự động thu hẹp lại tương ứng dựa trên dữ liệu chuẩn từ Backend API.
 - **Đồng bộ toàn diện:** Bảng xếp hạng, Thanh tiến trình (Progress Bar), và Đồ thị biến động Lịch sử (History Chart) sẽ lập tức phản hồi và vẽ lại ngay tức thì mà không cần tải lại trang.
+- **Đồng bộ checkbox:** checkbox trên header và checkbox ở table header luôn sync hai chiều.
 
 ## Chuẩn bị mở rộng chỉ báo
 
@@ -87,6 +98,7 @@ Khi cần cộng thêm chỉ báo mới vào điểm:
 3. Truyền component mới vào `build_score_payload(extra_components={...})`.
 4. Lưu qua `database.save_score`; schema đã có `extra_score`, `score_max`, `score_components`.
 5. Frontend đã đọc `rrg_score` riêng và dùng `score_max`, nên thêm điểm mới không làm sai cột RRG.
+6. Nếu muốn bật/tắt component mới trên giao diện, thêm checkbox vào `frontend/index.html`, `dynamicOptions` và `applyDynamicScoring()` trong `frontend/app.js`.
 
 ## File quan trọng
 
@@ -95,4 +107,7 @@ Khi cần cộng thêm chỉ báo mới vào điểm:
 - `backend/database.py`: SQLite + JSON export.
 - `backend/main_scorer.py`: endpoint refresh gọi bridge AmiBroker khi `DATA_SOURCE=amibroker`.
 - `frontend/data_vn30.json`: dữ liệu public cho Vercel.
+- `frontend/app.js`: dynamic scoring, sorting/filtering, API fallback.
+- `frontend/index.html`: layout dashboard và checkbox header/table header.
+- `frontend/style.css`: theme và trạng thái dimmed/unticked cho tiêu chí bị tắt.
 - `CHANGES_20260520.md`: ghi chú retest và nguyên nhân lỗi APX cũ.

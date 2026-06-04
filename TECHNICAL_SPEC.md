@@ -5,7 +5,7 @@
 Hệ thống hiện lấy dữ liệu từ AmiBroker để chấm điểm tập hợp cổ phiếu trong rổ VN30.
 
 - Data source chính: AmiBroker COM automation.
-- AFL functions: `FA_MCDX`, `FA_RRG`.
+- AFL functions: `FA_MCDX`, `FA_RRG`, AmiBroker native `ADX/PDI/MDI`.
 - Backend: FastAPI, SQLite.
 - Frontend: HTML/CSS/JS tĩnh, dùng API local hoặc fallback JSON.
 - Public deployment: Vercel đọc `frontend/data_vn30.json`.
@@ -20,6 +20,7 @@ Hệ thống hiện lấy dữ liệu từ AmiBroker để chấm điểm tập 
 6. Python đợi đủ `ready=1` cho 30 output files.
 7. Python parse key-value output, tính điểm, lưu SQLite.
 8. `database.export_to_json("vn30")` ghi `frontend/data_vn30.json`.
+9. Frontend có thể recalculate điểm hiển thị theo dynamic criteria toggles mà không thay đổi dữ liệu gốc.
 
 ## 3. Database
 
@@ -113,8 +114,31 @@ Khi thêm chỉ báo mới:
 3. Gọi `build_score_payload(extra_components={"new_indicator": score})`.
 4. Nếu cần hiển thị raw value, thêm cột DB hoặc JSON field riêng.
 5. Frontend không được tính RRG bằng `total_score - mcdx_score`; hiện đã dùng `rrg_score` riêng để tránh sai khi có component mới.
+6. Nếu component mới cần bật/tắt trên UI, bổ sung vào `dynamicOptions`, header pills, table header checkbox, sort mapping và chart datasets.
 
-## 6. API
+## 6. Frontend Dynamic Scoring
+
+Frontend giữ hai lớp điểm:
+
+- Điểm gốc từ backend/API/JSON: `mcdx_score`, `rrg_score`, `adx_score`, `score_max`, `score_components`.
+- Điểm động hiển thị sau khi user bật/tắt checkbox.
+
+Cơ chế:
+
+1. `normalizeScoreRow()` chuẩn hóa row và đọc `score_components` nếu cần.
+2. `applyDynamicScoring()` lưu `_orig_mcdx`, `_orig_rrg`, `_orig_adx`, `_orig_max`, `_orig_total`.
+3. Khi user tắt/bật tiêu chí, frontend tính lại `total_score` và `score_max`.
+4. `updateDynamicScoring()` sync checkbox trên header với checkbox trong table header.
+5. `toggleCriteriaTable()` cho phép thao tác trực tiếp từ table header.
+6. Các cột bị tắt dùng class `dimmed-col`; nhãn tiêu chí dùng class `unticked`.
+
+Ràng buộc UX:
+
+- Không cho tắt cả `MCDX`, `RRG`, `ADX`.
+- Dynamic scoring chỉ ảnh hưởng giao diện, không ghi vào SQLite/JSON.
+- Vercel vẫn đọc `frontend/data_vn30.json`; local backend mới chạy được refresh.
+
+## 7. API
 
 | Endpoint | Purpose |
 |---|---|
@@ -125,7 +149,7 @@ Khi thêm chỉ báo mới:
 
 Với `DATA_SOURCE=amibroker` và `category=vn30`, refresh gọi trực tiếp `run_vn30_scoring()`.
 
-## 7. Runtime Requirements
+## 8. Runtime Requirements
 
 - Windows.
 - AmiBroker đang mở.

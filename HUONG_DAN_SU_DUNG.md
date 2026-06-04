@@ -40,6 +40,29 @@ Chạy tay nếu không muốn dùng nút dashboard:
 .\venv\Scripts\python backend\run_amibroker_vn30.py --timeout 360
 ```
 
+### 4. Bật/tắt tiêu chí trên dashboard
+
+Dashboard hiện có 3 tiêu chí:
+
+```text
+MCDX Banker + RRG Quadrant + ADX Trend = Tổng điểm
+```
+
+Có thể bật/tắt từng tiêu chí ở:
+
+- Thanh tiêu chí trên header.
+- Checkbox ngay trong table header của các cột `MCDX Score`, `RRG Score`, `ADX Score`.
+
+Khi tắt một tiêu chí:
+
+- `total_score` được tính lại ngay trên frontend.
+- `score_max` co lại theo tiêu chí còn bật.
+- Cột bị tắt sẽ mờ đi để dễ nhận biết.
+- Bảng xếp hạng và chart lịch sử vẽ lại theo điểm động.
+- Hệ thống không cho tắt cả 3 tiêu chí cùng lúc.
+
+Lưu ý: thao tác bật/tắt này chỉ là phân tích trên giao diện, không ghi đè dữ liệu gốc trong SQLite hoặc JSON.
+
 ## Link public
 
 ```text
@@ -57,7 +80,7 @@ C:\Users\Public\ag_vn30_bridge\ami_vn30_<SYMBOL>.txt
 Ví dụ nội dung:
 
 ```text
-symbol=VCB;banker=5.891842;hotmoney=17.589798;rs_ratio=-1.213547;rs_mom=0.990822;quadrant=4;tail_5d=1.798761;ready=1
+symbol=VCB;banker=6.387589;hotmoney=17.873365;rs_ratio=-0.638458;rs_mom=1.340996;quadrant=4;tail_5d=2.147165;adx=32.935825;di_plus=34.524944;di_minus=11.045899;adx_1d=31.506115;adx_3d=28.602303;ready=1
 ```
 
 ## Cách hiểu điểm
@@ -68,6 +91,7 @@ symbol=VCB;banker=5.891842;hotmoney=17.589798;rs_ratio=-1.213547;rs_mom=0.990822
 - `extra_score`: tổng các điểm mở rộng ngoài MCDX/RRG, hiện gồm ADX.
 - `total_score = mcdx_score + rrg_score + adx_score`.
 - `score_max = 2.5`.
+- Checkbox trên giao diện có thể tạm loại một hoặc nhiều component khỏi `total_score` để so sánh ranking.
 
 ## Lỗi thường gặp
 
