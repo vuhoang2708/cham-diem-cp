@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Log — SignalBoard VN — 2026-06-04</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --yellow: #d29922; --red: #f85149;
+    --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", monospace; line-height: 1.6; padding: 24px; }
+  .container { max-width: 960px; margin: 0 auto; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 28px; }
+  header h1 { font-size: 1.8rem; color: var(--accent); }
+  header .meta { color: var(--muted); font-size: 0.875rem; margin-top: 6px; }
+  h2 { font-size: 1.25rem; color: var(--accent); margin: 32px 0 12px; border-left: 3px solid var(--accent); padding-left: 10px; }
+  h3 { font-size: 1rem; color: var(--purple); margin: 20px 0 8px; }
+  p { margin-bottom: 10px; }
+  ul, ol { margin: 8px 0 12px 20px; }
+  li { margin-bottom: 4px; }
+  code { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 0.875rem; color: #79c0ff; }
+  pre { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 16px; overflow-x: auto; margin: 12px 0; }
+  pre code { background: none; border: none; padding: 0; color: #e6edf3; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+  th { background: var(--surface); border: 1px solid var(--border); padding: 8px 12px; color: var(--muted); text-align: left; }
+  td { border: 1px solid var(--border); padding: 8px 12px; }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+  .badge-green { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+  .badge-yellow { background: rgba(210,153,34,0.15); color: var(--yellow); border: 1px solid rgba(210,153,34,0.3); }
+  .badge-red { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
+  .badge-blue { background: rgba(88,166,255,0.15); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }
+  .section { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 16px 0; }
+  .check { color: var(--green); } .pend { color: var(--yellow); } .prog { color: var(--accent); }
+  .callout { background: rgba(88,166,255,0.08); border-left: 4px solid var(--accent); padding: 12px 16px; margin: 12px 0; border-radius: 0 6px 6px 0; }
+  .callout.warning { background: rgba(210,153,34,0.08); border-color: var(--yellow); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>📊 Session Log — SignalBoard VN</h1>
+  <div class="meta">
+    Ngày: 2026-06-04 &nbsp;|&nbsp;
+    Agent: Claude AI (Sonnet 4.6) &nbsp;|&nbsp;
+    Commit cơ sở: <code>6ca2867</code> &nbsp;|&nbsp;
+    Repo: vuhoang2708 / Cham diem co phieu
+  </div>
+</header>
+
+<h2>🎯 Yêu Cầu Ban Đầu</h2>
+<div class="section">
+  <p>Sau commit <code>6ca2867 docs: update current scoring and dynamic UI docs</code>, yêu cầu thực hiện:</p>
+  <ol>
+    <li>Đọc toàn bộ tài liệu và mã nguồn → lập <strong>báo cáo audit chi tiết</strong></li>
+    <li>Tìm kiếm repo cao sao trên mạng → đề xuất <strong>3 hướng phát triển</strong> thành sản phẩm chính thức</li>
+    <li>Chọn hướng gần VN nhất → lên <strong>Master Plan</strong> theo phase</li>
+    <li><strong>Bắt tay triển khai Phase 1</strong></li>
+    <li>Tạo <strong>kịch bản UAT</strong> cho Gemini subagent browser</li>
+    <li>Tạo <strong>tài liệu quản trị dự án</strong> cho agent/PM kế tiếp</li>
+    <li><strong>Push lên GitHub</strong> sau khi hoàn thành</li>
+    <li>Xuất toàn bộ chat thành <strong>.md và .html</strong></li>
+  </ol>
+</div>
+
+<h2>🔍 Kết Quả Audit</h2>
+<div class="section">
+  <h3>Điểm mạnh</h3>
+  <ul>
+    <li>Kiến trúc modular — scoring, database, AmiBroker bridge tách biệt rõ</li>
+    <li>Dynamic scoring UI realtime (toggle không reload page)</li>
+    <li>Dual deploy: local realtime + Vercel static demo</li>
+    <li>Extensible: <code>build_score_payload(extra_components={})</code></li>
+    <li>Tài liệu đầy đủ (README, TECHNICAL_SPEC, HUONG_DAN, SCORING_EXTENSION)</li>
+    <li>Historical tracking: SQLite primary key theo ngày</li>
+  </ul>
+  <h3>Vấn đề phát hiện</h3>
+  <table>
+    <tr><th>#</th><th>Vấn đề</th><th>Mức độ</th><th>Trạng thái</th></tr>
+    <tr><td>1</td><td>SQL Injection trong <code>database.py:117</code> (f-string trong SQL)</td><td><span class="badge badge-red">High</span></td><td><span class="badge badge-green">FIXED</span></td></tr>
+    <tr><td>2</td><td>AmiBroker dependency — không deploy cloud được</td><td><span class="badge badge-red">High</span></td><td><span class="badge badge-yellow">P1 Solution</span></td></tr>
+    <tr><td>3</td><td>CORS <code>allow_origins=["*"]</code></td><td><span class="badge badge-yellow">Medium</span></td><td><span class="badge badge-yellow">P1 Pending</span></td></tr>
+    <tr><td>4</td><td>No auth trên <code>/api/refresh</code> và <code>/api/import</code></td><td><span class="badge badge-yellow">Medium</span></td><td><span class="badge badge-yellow">P1 Pending</span></td></tr>
+    <tr><td>5</td><td><code>scraper_mcdx.py</code> Playwright ~90 phút cho VN100</td><td><span class="badge badge-red">High</span></td><td><span class="badge badge-blue">Legacy</span></td></tr>
+  </table>
+</div>
+
+<h2>🌐 Nghiên Cứu Thị Trường</h2>
+<div class="section">
+  <h3>Repos nổi bật</h3>
+  <table>
+    <tr><th>Repo</th><th>Stars</th><th>Relevance</th></tr>
+    <tr><td>OpenBB Terminal</td><td>~68,600</td><td>Gold standard OSS quant platform</td></tr>
+    <tr><td>vnstock (thinh-vu)</td><td>~1,300</td><td>Thư viện Python duy nhất cho VN market</td></tr>
+    <tr><td>Screeni-py / PKScreener (India)</td><td>~686 / ~352</td><td>Closest analogue — CLI + Telegram alerts</td></tr>
+  </table>
+  <h3>Bài học từ sản phẩm thành công</h3>
+  <ul>
+    <li><strong>Finviz:</strong> Free tier tạo user base → Elite unlock realtime data ($25/tháng)</li>
+    <li><strong>TradingView ($3B):</strong> Network effects + Pine Script ecosystem + broker integrations</li>
+    <li><strong>FiinTrade VN:</strong> Institutional data = highest credibility trong thị trường VN</li>
+  </ul>
+</div>
+
+<h2>🚀 3 Hướng Phát Triển</h2>
+
+<div class="section">
+  <h3>Hướng 1: VN Stock Screener</h3>
+  <p>Mở rộng sang 1,700+ mã HOSE/HNX/UPCOM. Freemium $5–10/tháng.</p>
+  <p><strong>+</strong> Thị trường lớn nhất &nbsp;|&nbsp; <strong>-</strong> Competition nặng với Vietstock/Simplize</p>
+</div>
+
+<div class="section">
+  <h3>Hướng 2: Quant Alpha Engine (B2B)</h3>
+  <p>Factor research + backtesting cho quỹ nhỏ/family office. $200–500/tháng/user.</p>
+  <p><strong>+</strong> Willingness-to-pay cao &nbsp;|&nbsp; <strong>-</strong> Sales cycle dài, cần credibility</p>
+</div>
+
+<div class="section" style="border-color: var(--accent);">
+  <h3>Hướng 3 ★ (ĐÃ CHỌN): SignalBoard VN — Social + Technical Alert Platform</h3>
+  <p>Scoring kỹ thuật + social layer + Telegram/Zalo alerts. <strong>99k–199k VND/tháng.</strong></p>
+  <p><strong>+</strong> Phù hợp culture VN (Telegram/Zalo), network effects, signal marketplace</p>
+  <p><strong>-</strong> Cần critical mass, content moderation</p>
+  <div class="callout">
+    <strong>Lý do chọn:</strong> 90% investor VN đã dùng Telegram/Zalo để chia sẻ cổ phiếu. Platform này đáp ứng đúng workflow sẵn có, tạo network effects, và monetize qua signal marketplace mà không vi phạm luật tư vấn đầu tư.
+  </div>
+</div>
+
+<h2>🗺️ Master Plan — SignalBoard VN</h2>
+<div class="section">
+  <table>
+    <tr><th>Phase</th><th>Timeline</th><th>Mục tiêu chính</th></tr>
+    <tr><td><strong>Phase 1</strong></td><td>Tháng 1–3</td><td>Cloud-Ready MVP: thoát AmiBroker, JWT auth, Telegram bot, Docker deploy</td></tr>
+    <tr><td><strong>Phase 2</strong></td><td>Tháng 4–6</td><td>Monetization: subscription VNPAY/Stripe, VN100, alert nâng cao</td></tr>
+    <tr><td><strong>Phase 3</strong></td><td>Tháng 7–9</td><td>Community: portfolio, signal sharing, Signal Marketplace, Zalo Mini App</td></tr>
+    <tr><td><strong>Phase 4</strong></td><td>Tháng 10–12</td><td>Scale & Pitch: AI explanation, backtest, investor deck, Series A prep</td></tr>
+  </table>
+  <div class="callout">
+    <strong>OKR Year 1:</strong> 500 MAU trả phí | Revenue ≥ $2,000/tháng | NPS ≥ 40
+  </div>
+</div>
+
+<h2>⚙️ Phase 1 — Đã Triển Khai</h2>
+<div class="section">
+  <h3>Files mới tạo</h3>
+  <table>
+    <tr><th>File</th><th>Mô tả</th><th>Status</th></tr>
+    <tr><td><code>backend/cloud_pipeline.py</code></td><td>vnstock + pandas-ta thay AmiBroker</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>backend/auth.py</code></td><td>JWT auth (free/pro/admin roles)</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>backend/telegram_bot.py</code></td><td>Telegram alerts + webhook</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>backend/scheduler.py</code></td><td>APScheduler 4:30PM + 8:45AM VN</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>Dockerfile</code></td><td>Container hóa backend</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>requirements-cloud.txt</code></td><td>Cloud deps (no pywin32)</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>docs/AUDIT_REPORT.md</code></td><td>Báo cáo audit kỹ thuật</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>docs/PRODUCT_STRATEGY.md</code></td><td>3 hướng + Master Plan</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>docs/UAT_SCENARIOS.yaml</code></td><td>27 test cases cho browser agent</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>docs/PROJECT_MANAGEMENT.md</code></td><td>PM Handbook cho agent kế tiếp</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>docs/SESSION_LOG_20260604.md</code></td><td>Session log này (.md)</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+    <tr><td><code>docs/SESSION_LOG_20260604.html</code></td><td>Session log này (.html)</td><td><span class="badge badge-green">✅ Done</span></td></tr>
+  </table>
+
+  <h3>Cloud Pipeline Architecture</h3>
+  <pre><code>vnstock (TCBS API)
+  → fetch_ohlcv(symbol, days=90)
+  → compute_adx_indicators()      ← pandas-ta ADX(14)
+  → compute_rrg_indicators()      ← RS-Ratio/RS-Mom vs VNINDEX benchmark
+  → compute_net_buying_proxy()    ← volume-based MCDX proxy
+  → scoring.py (same formulas, unchanged)
+  → database.py (same schema, unchanged)</code></pre>
+
+  <div class="callout warning">
+    <strong>⚠️ Lưu ý MCDX:</strong> Cloud version dùng volume-based proxy thay cho FireAnt proprietary indicator. Cần liên hệ FireAnt/SSI về data licensing trước Phase 2.
+  </div>
+</div>
+
+<h2>🧪 UAT Scenarios</h2>
+<div class="section">
+  <p>File: <code>docs/UAT_SCENARIOS.yaml</code> — 27 test cases, 7 suites:</p>
+  <table>
+    <tr><th>Suite</th><th>Tests</th><th>Mô tả</th></tr>
+    <tr><td>Smoke</td><td>S01–S04</td><td>Dashboard load, API health, Vercel URL</td></tr>
+    <tr><td>Dynamic Scoring</td><td>D01–D04</td><td>Toggle MCDX/RRG/ADX, prevent untick all, sync checkbox</td></tr>
+    <tr><td>Sorting</td><td>T01–T02</td><td>Default descending sort, click-to-sort</td></tr>
+    <tr><td>Tab Navigation</td><td>N01–N02</td><td>Active tab, History chart</td></tr>
+    <tr><td>Responsive</td><td>R01</td><td>Mobile 375px viewport</td></tr>
+    <tr><td>Performance</td><td>P01–P02</td><td>Page load &lt;3s, API &lt;2s</td></tr>
+    <tr><td>Data Integrity</td><td>I01–I03</td><td>VN30 count ≥25, score range, quadrant values</td></tr>
+  </table>
+  <p><strong>Ngưỡng pass:</strong> ≥90% → PASS | 80–89% → CONDITIONAL PASS | &lt;80% → FAIL</p>
+</div>
+
+<h2>📋 PM Handbook Summary</h2>
+<div class="section">
+  <p>File: <code>docs/PROJECT_MANAGEMENT.md</code></p>
+  <ul>
+    <li>Trạng thái đầy đủ (đã làm / đang làm / backlog)</li>
+    <li>Environment variables và cách chạy (local / cloud / Docker / Railway)</li>
+    <li>Sprint plan 6 sprints × 2 tuần = 12 tuần Phase 1</li>
+    <li>Quyết định thiết kế quan trọng + lý do (MCDX proxy, SQLite vs PostgreSQL, Railway vs AWS, Telegram vs app native)</li>
+    <li>Risk register với biện pháp</li>
+    <li>Checklist handoff khi bàn giao</li>
+    <li>Coding principles (no mock DB, pin versions, parameterized SQL, no hardcode secrets)</li>
+  </ul>
+</div>
+
+<h2>📤 Deliverables Tổng Hợp</h2>
+<div class="section">
+  <table>
+    <tr><th>Deliverable</th><th>File</th><th>Status</th></tr>
+    <tr><td>Audit Report</td><td><code>docs/AUDIT_REPORT.md</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>Product Strategy & Master Plan</td><td><code>docs/PRODUCT_STRATEGY.md</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>Cloud Data Pipeline</td><td><code>backend/cloud_pipeline.py</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>JWT Authentication</td><td><code>backend/auth.py</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>Telegram Bot</td><td><code>backend/telegram_bot.py</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>Scheduled Refresh</td><td><code>backend/scheduler.py</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>Docker Deployment</td><td><code>Dockerfile</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>Cloud Requirements</td><td><code>requirements-cloud.txt</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>UAT Scenarios (Gemini browser)</td><td><code>docs/UAT_SCENARIOS.yaml</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>PM Handbook (for next agent)</td><td><code>docs/PROJECT_MANAGEMENT.md</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>SQL Injection Fix</td><td><code>backend/database.py:117</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>Session Log (.md)</td><td><code>docs/SESSION_LOG_20260604.md</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>Session Log (.html)</td><td><code>docs/SESSION_LOG_20260604.html</code></td><td><span class="badge badge-green">✅</span></td></tr>
+    <tr><td>Push lên GitHub</td><td>commit mới</td><td><span class="badge badge-yellow">🔄 Next</span></td></tr>
+  </table>
+</div>
+
+<footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem;">
+  Generated by Claude AI (Sonnet 4.6) — 2026-06-04 &nbsp;|&nbsp;
+  <a href="https://cham-diem-cp.vercel.app">https://cham-diem-cp.vercel.app</a>
+</footer>
+
+</div>
+</body>
+</html>

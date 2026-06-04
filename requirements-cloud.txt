@@ -1,0 +1,14 @@
+# Cloud deployment dependencies (Phase 1 — no AmiBroker)
+fastapi
+uvicorn[standard]
+pandas
+pandas-ta
+numpy
+requests
+httpx
+apscheduler
+vnstock==0.2.8.3
+PyJWT
+passlib[bcrypt]
+python-multipart
+python-dotenv

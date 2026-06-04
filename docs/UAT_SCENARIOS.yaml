@@ -1,0 +1,382 @@
+# UAT Test Scenarios — SignalBoard VN
+# Kịch bản test cho Gemini subagent browser (Playwright/CDP)
+# Format: YAML để agent dễ parse và execute
+
+meta:
+  product: SignalBoard VN
+  base_url: "http://127.0.0.1:8000"
+  public_url: "https://cham-diem-cp.vercel.app"
+  test_date: "2026-06-04"
+  tester_agent: gemini-subagent-browser
+  browser: chromium
+  viewport: "1440x900"
+
+---
+
+# ============================================================
+# SUITE 1: SMOKE TEST — Trang chủ load đúng
+# ============================================================
+suite: smoke
+description: "Kiểm tra dashboard load thành công và hiển thị dữ liệu"
+
+tests:
+  - id: S01
+    name: "Dashboard load thành công"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: wait_for_selector
+        selector: "table#scoreTable, .score-table, [data-testid='score-table']"
+        timeout: 10000
+      - action: assert_visible
+        selector: "table"
+        message: "Bảng điểm phải hiển thị"
+      - action: assert_count
+        selector: "tbody tr"
+        min: 1
+        message: "Phải có ít nhất 1 dòng dữ liệu"
+    expected: "Bảng VN30 hiển thị với ≥1 dòng"
+
+  - id: S02
+    name: "Tiêu đề dashboard đúng"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: assert_text_contains
+        selector: "h1, .brand, .title"
+        text: "VN30"
+        message: "Tiêu đề phải chứa VN30"
+    expected: "Hiển thị 'VN30' trong tiêu đề"
+
+  - id: S03
+    name: "API /api/scores trả dữ liệu hợp lệ"
+    steps:
+      - action: api_get
+        url: "{{base_url}}/api/scores?category=vn30"
+      - action: assert_response_status
+        expected_status: 200
+      - action: assert_json_array
+        min_length: 1
+      - action: assert_json_field
+        path: "[0].symbol"
+        not_empty: true
+      - action: assert_json_field
+        path: "[0].total_score"
+        type: number
+    expected: "API trả array ≥1 phần tử với symbol và total_score hợp lệ"
+
+  - id: S04
+    name: "Vercel public URL load được"
+    steps:
+      - action: navigate
+        url: "{{public_url}}"
+      - action: wait_for_selector
+        selector: "table"
+        timeout: 15000
+      - action: screenshot
+        filename: "s04_vercel_load.png"
+    expected: "Vercel page load không lỗi"
+
+# ============================================================
+# SUITE 2: DYNAMIC SCORING — Bật/tắt tiêu chí
+# ============================================================
+suite: dynamic_scoring
+description: "Kiểm tra checkbox MCDX/RRG/ADX cập nhật điểm đúng"
+
+tests:
+  - id: D01
+    name: "Tắt MCDX — điểm giảm xuống"
+    precondition: "Dashboard đã load, lấy total_score dòng đầu tiên trước khi tắt"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: wait_for_selector
+        selector: "tbody tr:first-child"
+      - action: capture_value
+        selector: "tbody tr:first-child [data-col='total_score'], tbody tr:first-child td:nth-child(3)"
+        variable: "score_before"
+      - action: capture_value
+        selector: "tbody tr:first-child [data-col='mcdx_score'], tbody tr:first-child td:nth-child(4)"
+        variable: "mcdx_before"
+      - action: uncheck
+        selector: "#chkMCDX"
+      - action: wait_for_animation
+        duration: 500
+      - action: capture_value
+        selector: "tbody tr:first-child [data-col='total_score'], tbody tr:first-child td:nth-child(3)"
+        variable: "score_after"
+      - action: assert_numeric_less
+        value: "{{score_after}}"
+        than: "{{score_before}}"
+        message: "Điểm tổng phải giảm khi tắt MCDX"
+      - action: screenshot
+        filename: "d01_mcdx_unchecked.png"
+    expected: "score_after = score_before - mcdx_before"
+    teardown:
+      - action: check
+        selector: "#chkMCDX"
+
+  - id: D02
+    name: "Tắt RRG — điểm giảm xuống"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: wait_for_selector
+        selector: "tbody tr:first-child"
+      - action: capture_value
+        selector: "tbody tr:first-child td:nth-child(3)"
+        variable: "score_before"
+      - action: uncheck
+        selector: "#chkRRG"
+      - action: wait_for_animation
+        duration: 500
+      - action: capture_value
+        selector: "tbody tr:first-child td:nth-child(3)"
+        variable: "score_after"
+      - action: assert_numeric_less
+        value: "{{score_after}}"
+        than: "{{score_before}}"
+    expected: "Điểm giảm khi tắt RRG"
+    teardown:
+      - action: check
+        selector: "#chkRRG"
+
+  - id: D03
+    name: "Không cho tắt cả 3 tiêu chí"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: uncheck
+        selector: "#chkMCDX"
+      - action: uncheck
+        selector: "#chkRRG"
+      - action: uncheck
+        selector: "#chkADX"
+      - action: wait_for_animation
+        duration: 500
+      - action: assert_any_checked
+        selectors: ["#chkMCDX", "#chkRRG", "#chkADX"]
+        message: "Ít nhất 1 checkbox phải được check"
+      - action: assert_visible
+        selector: ".alert, [role='alert']"
+        optional: true
+        message: "Có thể hiện alert cảnh báo"
+    expected: "Ít nhất 1 checkbox vẫn còn check sau khi cố tắt hết"
+
+  - id: D04
+    name: "Header pill và table header checkbox đồng bộ"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: uncheck
+        selector: "#chkMCDX"
+      - action: wait_for_animation
+        duration: 300
+      - action: assert_checked_state
+        selector: "#chkTableMCDX"
+        expected: false
+        message: "Table header MCDX checkbox phải đồng bộ với header pill"
+      - action: check
+        selector: "#chkTableRRG"
+      - action: wait_for_animation
+        duration: 300
+      - action: assert_checked_state
+        selector: "#chkRRG"
+        expected: true
+        message: "Header pill RRG phải đồng bộ ngược lại"
+    expected: "Hai chiều sync hoạt động đúng"
+    teardown:
+      - action: check
+        selector: "#chkMCDX"
+
+# ============================================================
+# SUITE 3: SORTING & FILTERING
+# ============================================================
+suite: sorting
+description: "Kiểm tra sắp xếp bảng theo các cột"
+
+tests:
+  - id: T01
+    name: "Sắp xếp theo Total Score mặc định (giảm dần)"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: capture_column_values
+        selector: "tbody tr [data-col='total_score'], tbody tr td:nth-child(3)"
+        variable: "scores"
+      - action: assert_array_sorted_descending
+        variable: "scores"
+        message: "Default sort phải là total_score giảm dần"
+    expected: "Dòng đầu tiên có điểm cao nhất"
+
+  - id: T02
+    name: "Click cột Symbol để sắp xếp A-Z"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: click
+        selector: "th[data-sort='symbol'], th:nth-child(2)"
+      - action: wait_for_animation
+        duration: 300
+      - action: capture_column_values
+        selector: "tbody tr td:nth-child(2)"
+        variable: "symbols"
+      - action: assert_array_sorted_ascending
+        variable: "symbols"
+    expected: "Bảng sắp xếp A-Z theo Symbol"
+
+# ============================================================
+# SUITE 4: TAB NAVIGATION
+# ============================================================
+suite: tabs
+description: "Kiểm tra chuyển tab VN30/VN100/Custom/History"
+
+tests:
+  - id: N01
+    name: "Tab VN30 active mặc định"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: assert_has_class
+        selector: "[data-tab='vn30'], #tab-vn30"
+        class: "active"
+    expected: "Tab VN30 được active khi load"
+
+  - id: N02
+    name: "Click History tab → hiện chart"
+    steps:
+      - action: navigate
+        url: "{{base_url}}"
+      - action: click
+        selector: "[data-tab='history'], #tab-history, button:has-text('History')"
+      - action: wait_for_animation
+        duration: 500
+      - action: assert_visible
+        selector: "canvas, .history-chart, #historyChart"
+        message: "Chart canvas phải hiện ra"
+    expected: "Phần history/chart hiển thị"
+
+# ============================================================
+# SUITE 5: RESPONSIVE / MOBILE
+# ============================================================
+suite: responsive
+description: "Kiểm tra giao diện trên mobile viewport"
+
+tests:
+  - id: R01
+    name: "Mobile viewport 375x667 — bảng không bị vỡ"
+    steps:
+      - action: set_viewport
+        width: 375
+        height: 667
+      - action: navigate
+        url: "{{base_url}}"
+      - action: screenshot
+        filename: "r01_mobile_view.png"
+      - action: assert_no_horizontal_scroll
+        message: "Không được scroll ngang trên mobile"
+      - action: assert_visible
+        selector: "table"
+    expected: "Layout không bị vỡ trên mobile 375px"
+
+# ============================================================
+# SUITE 6: PERFORMANCE
+# ============================================================
+suite: performance
+description: "Kiểm tra thời gian load cơ bản"
+
+tests:
+  - id: P01
+    name: "Thời gian load trang < 3 giây"
+    steps:
+      - action: start_timer
+      - action: navigate
+        url: "{{base_url}}"
+      - action: wait_for_selector
+        selector: "tbody tr"
+      - action: stop_timer
+        variable: "load_time_ms"
+      - action: assert_numeric_less
+        value: "{{load_time_ms}}"
+        than: 3000
+    expected: "Page load hoàn tất dưới 3 giây"
+
+  - id: P02
+    name: "API /api/scores response < 2 giây"
+    steps:
+      - action: start_timer
+      - action: api_get
+        url: "{{base_url}}/api/scores?category=vn30"
+      - action: stop_timer
+        variable: "api_time_ms"
+      - action: assert_numeric_less
+        value: "{{api_time_ms}}"
+        than: 2000
+    expected: "API response dưới 2 giây"
+
+# ============================================================
+# SUITE 7: DATA INTEGRITY
+# ============================================================
+suite: data_integrity
+description: "Kiểm tra tính hợp lệ của dữ liệu"
+
+tests:
+  - id: I01
+    name: "Tất cả mã VN30 có mặt trong bảng"
+    precondition: "Có file data/vn30_symbols.json"
+    steps:
+      - action: api_get
+        url: "{{base_url}}/api/scores?category=vn30"
+      - action: assert_json_array
+        min_length: 25
+        message: "Phải có ít nhất 25 mã (VN30 = 30, cho phép 5 mã thiếu dữ liệu)"
+    expected: "≥ 25 mã trong kết quả"
+
+  - id: I02
+    name: "total_score nằm trong khoảng [0, score_max]"
+    steps:
+      - action: api_get
+        url: "{{base_url}}/api/scores?category=vn30"
+      - action: assert_all_records
+        condition: "total_score >= 0 AND total_score <= score_max"
+        message: "total_score phải trong khoảng [0, score_max]"
+    expected: "Không có record nào có điểm ngoài khoảng hợp lệ"
+
+  - id: I03
+    name: "Quadrant chỉ nhận giá trị 1, 2, 3, hoặc 4"
+    steps:
+      - action: api_get
+        url: "{{base_url}}/api/scores?category=vn30"
+      - action: assert_all_records
+        condition: "rrg_quadrant IN (1, 2, 3, 4, '1', '2', '3', '4', 'TĂNG GIÁ', 'TÍCH LŨY', 'SUY YẾU', 'GIẢM GIÁ')"
+        message: "Quadrant phải là 1-4 hoặc tên vùng RRG"
+    expected: "Tất cả quadrant hợp lệ"
+
+---
+
+# ============================================================
+# HƯỚNG DẪN SỬ DỤNG CHO GEMINI SUBAGENT
+# ============================================================
+agent_instructions: |
+  Bạn là một browser testing agent. Hãy thực thi các test case trên bằng Playwright.
+
+  Setup:
+  1. Khởi động server local: cd backend && uvicorn main:app --host 127.0.0.1 --port 8000
+  2. Chờ server sẵn sàng (wait for http://127.0.0.1:8000/api/scores trả 200)
+  3. Mở trình duyệt Chromium headless
+  4. Chạy từng suite theo thứ tự
+
+  Báo cáo:
+  - Ghi kết quả PASS/FAIL cho từng test
+  - Lưu screenshot khi có lỗi
+  - Tạo file uat_report_YYYYMMDD.md với summary
+
+  Xử lý lỗi:
+  - Nếu selector không tìm thấy: thử fallback selectors trong cùng action
+  - Nếu timeout: retry 1 lần, nếu vẫn fail → FAIL test
+  - Nếu suite smoke fail: dừng toàn bộ, báo cáo server issue
+
+  Ngưỡng pass:
+  - PASS: ≥ 90% tests passed
+  - CONDITIONAL PASS: 80-89% passed (ghi note)
+  - FAIL: < 80% passed

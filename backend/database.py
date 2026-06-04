@@ -113,12 +113,14 @@ def get_latest_scores(category=None):
         ) s2 ON s1.symbol = s2.symbol AND s1.category = s2.category AND s1.updated_date = s2.max_date
     '''
     
+    params: list = []
     if category:
-        query += f" WHERE s1.category = '{category}'"
-        
+        query += " WHERE s1.category = ?"
+        params.append(category)
+
     query += ' ORDER BY s1.total_score DESC'
-    
-    cursor.execute(query)
+
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     conn.close()
     records = []
